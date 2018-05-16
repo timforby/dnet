@@ -3,7 +3,11 @@ from keras.layers import Input
 from keras.layers.convolutional import Conv2D, ZeroPadding2D, AveragePooling2D, MaxPooling2D, UpSampling2D, Conv2DTranspose,Cropping2D
 from keras.layers.merge import Concatenate, Add
 from keras.layers.core import Activation, Dense, Reshape, Lambda
-from block import _conv2D,_conv2DTran,_blocker
+from static.block import _conv2D,_conv2DTran,_blocker
+from keras.layers.convolutional import Conv2D, ZeroPadding2D, AveragePooling2D, MaxPooling2D, UpSampling2D, Conv2DTranspose,Cropping2D
+from keras.layers.merge import Concatenate, Add
+from keras.layers.core import Activation, Dense, Reshape, Lambda
+from static.block import _conv2D,_conv2DTran,_blocker
 
 def build3(img_size,nclasses=6):
     ps0,ps1,depth = img_size
@@ -80,7 +84,14 @@ def build(img_size,nclasses=6):
     out = Reshape((ps0,ps1,nclasses))(iax)
 
     return Model(inputs=input, outputs=out)
-
+    
+def test(img_size):
+    ps0,ps1,depth = img_size
+    input = Input((ps0,ps1,depth))#200x200 ,150
+    a = _conv2D(64,8,stride=2,padding="valid")(input)#176, 135
+    a1 = MaxPooling2D((5,5))(a)#88
+    b = _conv2D(128,4,padding="valid")(a1)#84
+    return Model(inputs=input, outputs=b)
 def build2(img_size,nclasses=6):
     ps0,ps1,depth = img_size
 

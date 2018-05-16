@@ -48,10 +48,7 @@ def load_data(paths, start=0, end=999, step=1):
         start,end,step: Refers to the number of name of images. Only loads
             images with in this range.
     """
-    sets_imgs = []
-    for path in paths:
-        imgs = load_imgs(path,start,end,step)
-        sets_imgs.append(imgs)
+    imgs = load_imgs(path,start,end,step)
 
-    return sets_imgs
+    return imgs
     

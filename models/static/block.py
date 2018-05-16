@@ -10,14 +10,14 @@ def _batch_norm(input):
     '''
     return BatchNormalization(axis=3)(input)
 
-def _conv2D(filters,kernal_size,dilation=1,padding='same',activation="relu",batch_norm="after",pooling="none",amount=1):
+def _conv2D(filters,kernal_size,stride=1,dilation=1,padding='same',activation="relu",batch_norm="after",pooling="none",amount=1):
     '''Generates the basic residual block with convolution 2D
     '''
     def output(input):
         for i in range(amount):
             if batch_norm =="before":
                 input = _batch_norm(input)
-            input = Conv2D(filters,kernal_size,padding=padding,dilation_rate=dilation)(input)
+            input = Conv2D(filters,kernal_size,strides=stride,padding=padding,dilation_rate=dilation)(input)
             if batch_norm =="after":
                 input = _batch_norm(input)
             if activation:
