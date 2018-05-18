@@ -2,31 +2,31 @@ import numpy as np
 
 class Process:
     @classmethod
-    def setup(cls, xs, ys, s_l):
+    def setup(cls, xs, ys, s_l=None):
         """Sets up the labels for the network.
         #Arguments
             xs: (list of images) NxWxHxChannels
             ys: (list of images) NxWxHxChannels
-            s_l: (list ints) Selected labels to learn in network
+            s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
-        cls.y = ys
-        set_classes()
 
+        cls.y, cls.y_classes = get_classes(ys)
+        cls.max_label = np.max(cls.y_classes)+1
         cls.selected_labels = s_l
+        cls.y_categorize = categorize_y()
 
-    @classmethod
-    def set_classes(cls):
+    @staticmethod
+    def get_classes(ys):
         """Sets classes found in ground truwdwth.
             Finds unique values in each image
             then unique values in whole list = cls.classes
         """
+        ys_sc = []
         unique = np.array([])
-        for y in cls.y:
-            y = to_single_channel(y)
-            unique = np.concatenate(unique, np.unique(y))
-        cls.img_classes = np.unique(unique)
-        
-  
+        for i in range(len(ys)):
+            ys_sc.append(to_single_channel(ys[i]))#flattening
+            unique = np.concatenate(unique, np.unique(ys_sc[-1]))
+        return ys_sc, np.unique(unique)
 
     @staticmethod
     def cat_imgs(xs,xs_,depth=1):
@@ -42,33 +42,55 @@ class Process:
     def to_single_channel(y):
         return y[:,:,0]+(2*y[:,:,1])+(4*y[:,:,2])
 
-    @classmethod
-    def categorize_img(cls, y):
-        y = cls.to_single_channel(y)
+    @staticmethod
+    def to_three_channel(y):
+        y = y.reshape(y.shape[0], y.shape[1], 3)
+        return np.concatenate([y%2,(y//2)%2,(y//4)%2],axis=2)
+
+    @static
+    def categorize_img(y, y_classes, max_label, selected_labels):
+        """Creates a categorized (1-hot) image on WxHxC where C is number of classes
+            
+        #Arguments
+            y: (image) WxHx1 Must be flattened image with each value beign the class
+                of that pixel
+            y_classes: classes that exist within the ground truth
+            max_label: maximum label found in y_classses
+            selected_labels: user defined labels to select for training
+        """
         _y = y.reshape((y.size,1))
-        _sz = len(cls.max_labels)
-        _y = label_bin(_y,range(_sz))
-        _y = _y.reshape((y.shape[:2]+(_sz,))).astype(int)
-        _y = _y[:,:,cls.selected_labels]
+        _y = label_bin(_y,max_label)
+        _y = _y.reshape((y.shape[:2]+(max_label,))).astype(int)
+        _y = _y[:,:,y_classes]
+        if selected_labels:
+            _y = _y[:,:,selected_labels]
+        return _y
+
+    @staticmethod
+    def uncategorize_img(y, y_classes, max_label, selected_labels=None):
+        """Creates a flat image WxHx1 from categorized image
+            
+        #Arguments
+            y: (image) WxHxC Must be categorized image in onehot
+        """
+        
+        if selected_labels:
+            _y = np.zeros((y.shape[:2]+(len(y_classes),)))
+            _y[:,:,selected_labels] = y
+            y = _y.copy()
+        _y = np.zeros((y.shape[:2]+(max_label,)))
+        _y[:,:,y_classes] = y
         return _y
 
     @classmethod
-    def categorize_imgs(cls,ys):
-        return [cls.categorize_img(y) for y in ys] 
+    def categorize_y(cls):
+        return [categorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in cls.y] 
+
+    @classmethod
+    def uncategorize_imgs(cls, ys):
+        return [uncategorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
 
 
-    @classmethod    
-    def to_label_map(cls,y):
-        y_res = y[:,:,0]+(2*y[:,:,1])+(4*y[:,:,2])
-        y_comp = np.copy(y_res)
-        vals = [0]*len(cls.max_labels)    
-        for l in cls.selected_labels:
-            vals[l] = l
-        for k, v in zip(cls.max_labels,cls.selected_labels):
-            y_comp[y_res==k]= v
-
-        return y_comp
-    
     @classmethod
     def generate_patch(xs,ys,patch_size, batch_size=64, augment=False):
         x_train = []
