@@ -2,18 +2,19 @@ import numpy as np
 
 class Process:
     @classmethod
-    def setup(cls, xs, ys, s_l=None):
+    def setup(cls, xs, ys, xs_test,ys_test, patch_size, batch_size, s_l=None):
         """Sets up the labels for the network.
         #Arguments
             xs: (list of images) NxWxHxChannels
             ys: (list of images) NxWxHxChannels
             s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
-
-        cls.y, cls.y_classes = get_classes(ys)
+        cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
+        cls.patch_size, cls.batch_size = patch_size, batch_size
+        cls.y_flat, cls.y_classes = get_classes(ys)
         cls.max_label = np.max(cls.y_classes)+1
         cls.selected_labels = s_l
-        cls.y_categorize = categorize_y()
+        cls.y_categorize = categorize_y(cls.y_flat)
 
     @staticmethod
     def get_classes(ys):
@@ -47,7 +48,7 @@ class Process:
         y = y.reshape(y.shape[0], y.shape[1], 3)
         return np.concatenate([y%2,(y//2)%2,(y//4)%2],axis=2)
 
-    @static
+    @staticmethod
     def categorize_img(y, y_classes, max_label, selected_labels):
         """Creates a categorized (1-hot) image on WxHxC where C is number of classes
             
@@ -83,8 +84,8 @@ class Process:
         return _y
 
     @classmethod
-    def categorize_y(cls):
-        return [categorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in cls.y] 
+    def categorize_y(cls, ys):
+        return [categorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
 
     @classmethod
     def uncategorize_imgs(cls, ys):
@@ -92,7 +93,7 @@ class Process:
 
 
     @classmethod
-    def generate_patch(xs,ys,patch_size, batch_size=64, augment=False):
+    def generate_patch(cls,augment=False):
         x_train = []
         y_train = []
 
@@ -101,27 +102,27 @@ class Process:
             patch_locations = []
             sum_locations = 0
             all_locations = []
-            for y in ys:
-                locations = int((y.shape[0]-patch_size[0])*(y.shape[1]-patch_size[1]))
+            for y in cls.ys_flat:
+                locations = int((y.shape[0]-cls.patch_size[0])*(y.shape[1]-cls.patch_size[1]))
                 sum_locations += locations
                 all_locations.append(locations)
                 patch_locations.append(np.random.permutation(locations))
-            patch_index = [0]*len(ys)
+            patch_index = [0]*len(cls.ys_flat)
             
             i = 0
             while sum(patch_index) < sum_locations:
                 #If patch_index has not reached all locations
                 if patch_index[i] < all_locations[i]:
                     index=patch_locations[i][patch_index[i]]
-                    x_patch = get_patch(xs[i], patch_size, index)
-                    y_patch = get_patch(ys[i], patch_size, index)
+                    x_patch = get_patch(cls.xs[i], cls.patch_size, index)
+                    y_patch = get_patch(cls.y_categorize[i], cls.patch_size, index)
                     x_train.append(x_patch)
                     y_train.append(y_patch)
                     patch_index[i] += 1
                 i+=1
-                i = i%len(y)
+                i = i%len(cls.ys)
 
-                if len(y_train) == batch_size:
+                if len(y_train) == cls.batch_size:
                     y_train = np.array(y_train)
                     x_train = np.array(x_train)
                     yield x_train, y_train
@@ -134,3 +135,11 @@ class Process:
         x_val = index%(img.shape[0]-patch_size[0])
         y_val = index//(img.shape[0]-patch_size[0])
         return img[x_val:x_val+patch_size[0],y_val:y_val+patch_size[1],:]
+
+    @classmethod
+    def select_patch(cls,test=True,image_index=0,index=1500):
+        if test:
+            x,y = get_patch(cls.ys_test[image_index],cls.patch_size,index)
+        else:
+            x,y = get_patch(cls.ys[image_index],cls.patch_size,index)
+        return x,y

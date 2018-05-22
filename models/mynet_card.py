@@ -3,7 +3,7 @@ from keras.layers import Input
 from keras.layers.convolutional import Conv2D, ZeroPadding2D, AveragePooling2D, MaxPooling2D, UpSampling2D, Conv2DTranspose,Cropping2D
 from keras.layers.merge import Concatenate, Add
 from keras.layers.core import Activation, Dense, Reshape, Lambda
-from block import _conv2D,_conv2DTran,_blocker
+from static.block import _conv2D,_conv2DTran,_blocker
 
 def build(img_size,nclasses=6):
     ps0,ps1,depth = img_size
