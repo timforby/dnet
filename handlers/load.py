@@ -17,7 +17,7 @@ def get_num(stri):
 
 # Load images in given directory
 def load_imgs(dir_name, start, end, step):
-    fnames = get_filenames(path)
+    fnames = get_filenames(dir_name)
     imgs = []
     count = 0
     for img in fnames:
@@ -36,11 +36,10 @@ def load_imgs(dir_name, start, end, step):
         if len(img.shape) ==2:
             img = np.reshape(img,(img.shape[0],img.shape[1],1))
         imgs.append(img)
-    print()
     return imgs
 
 
-def load_data(paths, start=0, end=999, step=1):
+def load_data(path, start=0, end=999, step=1):
     """Load images into a list
     #Arguments
         paths: List of strings representing paths to folders containing

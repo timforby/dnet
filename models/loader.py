@@ -1,4 +1,2 @@
-
-
 def load(module):
-    return __import__(module)
+    return __import__("models."+module, fromlist=[''])

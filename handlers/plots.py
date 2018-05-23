@@ -4,8 +4,9 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import keras.callbacks as cb
 
-class PlotLoss(keras.callbacks.Callback):
+class PlotLoss(cb.Callback):
 
     def __init__(self, path, gen):
         self.proc = gen
@@ -53,13 +54,11 @@ class PlotLoss(keras.callbacks.Callback):
                 ax = plt.subplot(gs[i])
                 if i % 3 == 0:
                     w = di
-                    #w = di[:,:,np.array([0,1,4])]
                 if i % 3 == 1:
                     pred = self.proc.uncategorize_imgs(np.argmax(dp,axis=3))
                     w = pred
                 if i % 3 == 2:
-                    truth = self.proc.uncategorize_imgs(np.argmax(dp,axis=3))
-                    w = truth
+                    w = dt
                 ax.imshow(w,
                           cmap=plt.cm.gist_yarg,
                           interpolation='nearest',

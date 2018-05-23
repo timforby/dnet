@@ -9,12 +9,13 @@ class Process:
             ys: (list of images) NxWxHxChannels
             s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
+        cls.input_shape = patch_size+xs[0].shape[2:]
         cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
         cls.patch_size, cls.batch_size = patch_size, batch_size
-        cls.y_flat, cls.y_classes = get_classes(ys)
-        cls.max_label = np.max(cls.y_classes)+1
+        cls.ys_flat, cls.y_classes = cls.get_classes(ys)
+        cls.max_label = int(np.max(cls.y_classes)+1)
         cls.selected_labels = s_l
-        cls.y_categorize = categorize_y(cls.y_flat)
+        cls.y_categorize = cls.categorize_y(cls.ys_flat)
 
     @staticmethod
     def get_classes(ys):
@@ -23,15 +24,15 @@ class Process:
             then unique values in whole list = cls.classes
         """
         ys_sc = []
-        unique = np.array([])
+        unique = np.array([],dtype=np.int)
         for i in range(len(ys)):
-            ys_sc.append(to_single_channel(ys[i]))#flattening
-            unique = np.concatenate(unique, np.unique(ys_sc[-1]))
+            ys_sc.append(Process.to_single_channel(ys[i]))#flattening
+            unique = np.concatenate([unique, np.unique(ys_sc[-1])])
         return ys_sc, np.unique(unique)
 
     @staticmethod
     def cat_imgs(xs,xs_,depth=1):
-        return [np.concatenate(x,x_[:,:,:depth],axis=3) for x,x_ in zip(xs,xs_)]
+        return [np.concatenate([x,x_[:,:,:depth]],axis=2) for x,x_ in zip(xs,xs_)]
 
     @staticmethod
     def label_bin(y, max_labels):
@@ -41,7 +42,8 @@ class Process:
 
     @staticmethod
     def to_single_channel(y):
-        return y[:,:,0]+(2*y[:,:,1])+(4*y[:,:,2])
+        y = y[:,:,0]+(2*y[:,:,1])+(4*y[:,:,2])
+        return y.astype(np.int)
 
     @staticmethod
     def to_three_channel(y):
@@ -59,8 +61,8 @@ class Process:
             max_label: maximum label found in y_classses
             selected_labels: user defined labels to select for training
         """
-        _y = y.reshape((y.size,1))
-        _y = label_bin(_y,max_label)
+        _y = y.reshape((y.size))
+        _y = Process.label_bin(_y,max_label)
         _y = _y.reshape((y.shape[:2]+(max_label,))).astype(int)
         _y = _y[:,:,y_classes]
         if selected_labels:
@@ -85,11 +87,11 @@ class Process:
 
     @classmethod
     def categorize_y(cls, ys):
-        return [categorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
+        return [cls.categorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
 
     @classmethod
     def uncategorize_imgs(cls, ys):
-        return [uncategorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
+        return [cls.uncategorize_img(y, cls.y_classes, cls.max_label, cls.selected_labels) for y in ys] 
 
 
     @classmethod
@@ -120,7 +122,7 @@ class Process:
                     y_train.append(y_patch)
                     patch_index[i] += 1
                 i+=1
-                i = i%len(cls.ys)
+                i = i%len(cls.ys_flat)
 
                 if len(y_train) == cls.batch_size:
                     y_train = np.array(y_train)
@@ -139,7 +141,9 @@ class Process:
     @classmethod
     def select_patch(cls,test=True,image_index=0,index=1500):
         if test:
-            x,y = get_patch(cls.ys_test[image_index],cls.patch_size,index)
+            x = get_patch(cls.xs_test[image_index],cls.patch_size,index)
+            y = get_patch(cls.ys_test[image_index],cls.patch_size,index)
         else:
-            x,y = get_patch(cls.ys[image_index],cls.patch_size,index)
+            x = get_patch(cls.xs[image_index],cls.patch_size,index)
+            y = get_patch(cls.ys[image_index],cls.patch_size,index)
         return x,y

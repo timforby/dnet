@@ -1,38 +1,32 @@
-import os
-import sys
 import numpy as np
-from scipy import misc
 import handlers.args as args
 import handlers.load as load
-import handlers.proc.Process as proc
+from handlers.proc import Process as proc
 
 arg = args.get_args()
 
-#----Train Result Paths---
-OUT_PATH = 'results/'
-TRAIN_PATH = OUT_PATH+arg.name
-if os.path.exists(TRAIN_PATH):
-    if not arg.cont:
-        print("Training path already exists")
-        sys.exit(0)
-else:
-    if arg.cont:
-        print("Model does not exist")
-        sys.exit(0)
-    os.makedirs(TRAIN_PATH)
-
 #----Load Data---
-rgb = load.load_data("data/rgb")
-d = load.load_data("data/d")
+print("Loading Images")
+rgb = load.load_data(arg.input_folder+"rgb")
+d = load.load_data(arg.input_folder+"d")
 
 x = proc.cat_imgs(rgb,d)
-y = load.load_data("data/y")
+y = load.load_data(arg.input_folder+"y")
 
-xy = proc.setup(x,y,arg.patch_size,arg.batch_size)
+rgb_ng = load.load_data(arg.input_folder+"rgb_ng")
+d_ng = load.load_data(arg.input_folder+"d_ng")
+
+x_ng = proc.cat_imgs(rgb_ng,d_ng)
+y_ng = load.load_data(arg.input_folder+"y_ng")
+
+proc.setup(x,y, x_ng, y_ng, arg.patch_size,arg.batch_size)
+#proc.setup(x,y, None, None, arg.patch_size,arg.batch_size)
+
+del x,y,x_ng,y_ng,d,d_ng
 
 #----KERAS ENV-------
-os.environ["THEANO_FLAGS"]='device='+arg.device
-sys.setrecursionlimit(50000)
+#os.environ["THEANO_FLAGS"]='device=cuda'+str(arg.gpu)
+#sys.setrecursionlimit(50000)
 
 from keras.models import Model, load_model
 from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
@@ -42,21 +36,23 @@ from keras.utils import plot_model
 from models import loader
 module = loader.load(arg.model)
 
-if cont:
+#----COMPILE MODEL---
+if arg.cont:
     print("Loading Model")
-    model = load_model(TRAIN_PATH+'/model.hdf5')
+    model = load_model(arg.output_folder+'/model.hdf5')
 else:
     print("Generating Model")
-    model = module.build((patch_size+(x_img[0].shape[2],)),nclasses=len(label))
+    model = module.build(proc.input_shape,len(proc.y_classes))
     print("Compiling Model")
     model.compile('RMSprop', 'categorical_crossentropy')
     
 
+#----CHECKPOINT CALLBACKS -----
+checkpointer = ModelCheckpoint(filepath=arg.output_folder+'/model.hdf5', verbose=0, save_best_only=False)
+#PLOT
+from handlers.plots import PlotLoss as plot
+plotter = plot(arg.output_folder, proc)
 
-checkpointer = ModelCheckpoint(filepath=TRAIN_PATH+'/model.hdf5', verbose=0, save_best_only=False)
-breakPateau = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
-plotter = plotting.PlotLoss()
-
+#_!_!_!_!_!_!_RUN NETWORK_!_!_!_!_!_
 print("Setting up Network")
-
-model.fit_generator(proc.generate_patch(),steps_per_epoch=64,epochs=500000,callbacks=[checkpointer,plotter,breakPateau],use_multiprocessing=True)
+model.fit_generator(proc.generate_patch(),steps_per_epoch=64,epochs=500000,callbacks=[checkpointer,plotter],use_multiprocessing=False)
