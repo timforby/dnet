@@ -73,8 +73,6 @@ class PlotLoss(cb.Callback):
                     ax.set_title("Prediction \n")
                 elif i == 2:
                     ax.set_title("Truth \n")
-                    if j < 2:
-                        self.accuracy.append(calc_f1(pred,truth))
         gs.update(wspace=0)
         plt.savefig(os.path.join(self.path,str(epoch) + '_validation.png'))
         plt.close('all')
