@@ -23,6 +23,7 @@ class PlotLoss(cb.Callback):
     def on_epoch_end(self, epoch, logs = None):
         self.losses.append(logs.get('loss'))
         self.plot_training_curve()
+        self.plot_validation(epoch)
         return
 
     def plot_training_curve(self):
@@ -55,11 +56,11 @@ class PlotLoss(cb.Callback):
                 if i % 3 == 0:
                     w = di
                 if i % 3 == 1:
-                    pred = self.proc.uncategorize_imgs(np.argmax(dp,axis=3))
+                    pred = self.proc.uncategorize_imgs(dp)[0]
                     w = pred
                 if i % 3 == 2:
                     w = dt
-                ax.imshow(w,
+                ax.imshow(w[:,:,:3],
                           cmap=plt.cm.gist_yarg,
                           interpolation='nearest',
                           aspect='equal')

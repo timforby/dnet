@@ -47,7 +47,7 @@ class Process:
 
     @staticmethod
     def to_three_channel(y):
-        y = y.reshape(y.shape[0], y.shape[1], 3)
+        y = y.reshape(y.shape[0], y.shape[1], 1)
         return np.concatenate([y%2,(y//2)%2,(y//4)%2],axis=2)
 
     @staticmethod
@@ -83,6 +83,8 @@ class Process:
             y = _y.copy()
         _y = np.zeros((y.shape[:2]+(max_label,)))
         _y[:,:,y_classes] = y
+        _y = np.argmax(_y,axis=2)
+        _y = Process.to_three_channel(_y)
         return _y
 
     @classmethod
@@ -116,8 +118,8 @@ class Process:
                 #If patch_index has not reached all locations
                 if patch_index[i] < all_locations[i]:
                     index=patch_locations[i][patch_index[i]]
-                    x_patch = get_patch(cls.xs[i], cls.patch_size, index)
-                    y_patch = get_patch(cls.y_categorize[i], cls.patch_size, index)
+                    x_patch = cls.get_patch(cls.xs[i], cls.patch_size, index)
+                    y_patch = cls.get_patch(cls.y_categorize[i], cls.patch_size, index)
                     x_train.append(x_patch)
                     y_train.append(y_patch)
                     patch_index[i] += 1
@@ -141,9 +143,9 @@ class Process:
     @classmethod
     def select_patch(cls,test=True,image_index=0,index=1500):
         if test:
-            x = get_patch(cls.xs_test[image_index],cls.patch_size,index)
-            y = get_patch(cls.ys_test[image_index],cls.patch_size,index)
+            x = cls.get_patch(cls.xs_test[image_index],cls.patch_size,index)
+            y = cls.get_patch(cls.ys_test[image_index],cls.patch_size,index)
         else:
-            x = get_patch(cls.xs[image_index],cls.patch_size,index)
-            y = get_patch(cls.ys[image_index],cls.patch_size,index)
+            x = cls.get_patch(cls.xs[image_index],cls.patch_size,index)
+            y = cls.get_patch(cls.ys[image_index],cls.patch_size,index)
         return x,y
