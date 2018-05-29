@@ -8,14 +8,20 @@ import keras.callbacks as cb
 
 class PlotLoss(cb.Callback):
 
-    def __init__(self, path, gen):
+    def __init__(self, arg, gen):
         self.proc = gen
-        path=path+'/plots'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        self.path = path
+        self.arg = arg
+        path = arg.output_folder
+        self.path=path+'/plots'
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
         
     def on_train_begin(self, logs={}):
+        with open(self.arg.output_folder+"/settings.txt","w") as settings:
+            for x in self.arg.__dict__:
+                t = self.arg.__dict__[x]
+                if t is not None:
+                    settings.write(str(x)+": "+str(t)+"\n")
         self.losses = []
         self.accuracy = []
         return
@@ -23,7 +29,7 @@ class PlotLoss(cb.Callback):
     def on_epoch_end(self, epoch, logs = None):
         self.losses.append(logs.get('loss'))
         self.plot_training_curve()
-        self.plot_validation(epoch)
+        self.plot_images(epoch)
         return
 
     def plot_training_curve(self):
@@ -40,7 +46,7 @@ class PlotLoss(cb.Callback):
             logger.write(str(self.losses[-1])+"\n")
         
     # Plot a grid with 1 rows and 3 columns
-    def plot_validation(self, epoch):
+    def plot_images(self, epoch):
         fig = plt.figure(figsize=(10, 10))
         fig.suptitle('Epoch: ' + str(epoch), size=20)
         gs = gridspec.GridSpec(3, 3)
@@ -60,7 +66,11 @@ class PlotLoss(cb.Callback):
                     w = pred
                 if i % 3 == 2:
                     w = dt
-                ax.imshow(w[:,:,:3],
+                if len(w.shape) <3:
+                    w = np.reshape(w, w.shape+(1,))
+                if w.shape[2] == 1:
+                    w = np.repeat(w,3,axis=2)
+                ax.imshow(w[:,:,:3].astype(np.float),
                           cmap=plt.cm.gist_yarg,
                           interpolation='nearest',
                           aspect='equal')

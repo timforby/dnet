@@ -51,7 +51,7 @@ else:
 checkpointer = ModelCheckpoint(filepath=arg.output_folder+'/model.hdf5', verbose=0, save_best_only=False)
 #PLOT
 from handlers.plots import PlotLoss as plot
-plotter = plot(arg.output_folder, proc)
+plotter = plot(arg, proc)
 
 #_!_!_!_!_!_!_RUN NETWORK_!_!_!_!_!_
 print("Setting up Network")

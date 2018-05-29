@@ -2,7 +2,7 @@ import numpy as np
 
 class Process:
     @classmethod
-    def setup(cls, xs, ys, xs_test,ys_test, patch_size, batch_size, s_l=None):
+    def setup(cls, xs, ys, xs_test,ys_test, patch_size, batch_size, y_is_flat=False, s_l=None, one_hot=True):
         """Sets up the labels for the network.
         #Arguments
             xs: (list of images) NxWxHxChannels
@@ -12,13 +12,13 @@ class Process:
         cls.input_shape = patch_size+xs[0].shape[2:]
         cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
         cls.patch_size, cls.batch_size = patch_size, batch_size
-        cls.ys_flat, cls.y_classes = cls.get_classes(ys)
-        cls.max_label = int(np.max(cls.y_classes)+1)
         cls.selected_labels = s_l
-        cls.y_categorize = cls.categorize_y(cls.ys_flat)
+        cls.ys_flat, cls.y_classes = cls.get_classes(ys, y_is_flat)
+        cls.max_label = int(np.max(cls.y_classes)+1)
+        cls.y_categorize = cls.categorize_y(cls.ys_flat) if one_hot else cls.ys_flat
 
     @staticmethod
-    def get_classes(ys):
+    def get_classes(ys, y_is_flat):
         """Sets classes found in ground truwdwth.
             Finds unique values in each image
             then unique values in whole list = cls.classes
@@ -26,7 +26,8 @@ class Process:
         ys_sc = []
         unique = np.array([],dtype=np.int)
         for i in range(len(ys)):
-            ys_sc.append(Process.to_single_channel(ys[i]))#flattening
+            y = Process.to_single_channel(ys[i]) if not y_is_flat else ys[i]
+            ys_sc.append(y)#flattening
             unique = np.concatenate([unique, np.unique(ys_sc[-1])])
         return ys_sc, np.unique(unique)
 
