@@ -13,6 +13,7 @@ d = load.load_data(arg.input_folder+"d")
 x = proc.cat_imgs(rgb,d)
 y = load.load_data(arg.input_folder+"y")
 
+#validation
 rgb_ng = load.load_data(arg.input_folder+"rgb_ng")
 d_ng = load.load_data(arg.input_folder+"d_ng")
 
@@ -32,15 +33,15 @@ from keras.models import Model, load_model
 from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
 from keras.utils import plot_model
 
-#----MODEL MODULE---
-from models import loader
-module = loader.load(arg.model)
 
 #----COMPILE MODEL---
 if arg.cont:
     print("Loading Model")
     model = load_model(arg.output_folder+'/model.hdf5')
 else:
+    #----MODEL MODULE---
+    from models import loader
+    module = loader.load(arg.model)
     print("Generating Model")
     model = module.build(proc.input_shape,len(proc.y_classes))
     print("Compiling Model")
@@ -54,5 +55,5 @@ from handlers.plots import PlotLoss as plot
 plotter = plot(arg, proc)
 
 #_!_!_!_!_!_!_RUN NETWORK_!_!_!_!_!_
-print("Setting up Network")
+print("Running Network")
 model.fit_generator(proc.generate_patch(),steps_per_epoch=64,epochs=500000,callbacks=[checkpointer,plotter],use_multiprocessing=False)

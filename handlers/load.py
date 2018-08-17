@@ -1,4 +1,4 @@
-from scipy import misc
+import cv2
 import os
 import numpy as np
 
@@ -21,17 +21,11 @@ def load_imgs(dir_name, start, end, step):
     imgs = []
     count = 0
     for img in fnames:
-        if not img.endswith("png"):
-            continue
-        try:
-            if get_num(img) not in range(start,end,step):
-                continue
-        except ValueError:
-            print(img+": not read :: could not parse int")
+        if count not in range(start,end,step):
             continue
         count += 1
         fullpath = os.path.join(dir_name, img)
-        img = misc.imread(fullpath)
+        img = cv2.imread(fullpath)
         img = img/255.0
         if len(img.shape) ==2:
             img = np.reshape(img,(img.shape[0],img.shape[1],1))

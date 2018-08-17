@@ -17,6 +17,12 @@ class Process:
         cls.max_label = int(np.max(cls.y_classes)+1)
         cls.y_categorize = cls.categorize_y(cls.ys_flat) if one_hot else cls.ys_flat
 
+    @classmethod
+    def setup_predict(cls, xs, patch_size, batch_size):
+        cls.xs = xs
+        cls.input_shape = patch_size+xs[0].shape[2:]
+        cls.patch_size, cls.batch_size = patch_size, batch_size
+        
     @staticmethod
     def get_classes(ys, y_is_flat):
         """Sets classes found in ground truwdwth.
@@ -82,7 +88,7 @@ class Process:
             _y = np.zeros((y.shape[:2]+(len(y_classes),)))
             _y[:,:,selected_labels] = y
             y = _y.copy()
-        _y = np.zeros((y.shape[:2]+(max_label,)))
+        _y = np.zeros((y.shape[:2]+(max_label+1,)))
         _y[:,:,y_classes] = y
         _y = np.argmax(_y,axis=2)
         _y = Process.to_three_channel(_y)
@@ -134,6 +140,18 @@ class Process:
                     x_train = []
                     y_train = []
         
+        
+    @staticmethod
+    def generate_predict_patch(image, patch_size, batch_size):
+        x_pred = []
+        for r_indx in range(0, image.shape[0], patch_size[0]):
+            for c_indx in range(0, image.shape[1], patch_size[0]):
+                x_patch = image[r_indx:r_indx+patch_size[0],c_indx:c_indx+patch_size[1],:]
+                x_pred.append(x_patch)
+                if len(x_pred)==batch_size:
+                    yield np.array(x_pred)
+                    x_pred = []
+        yield np.array(x_pred)
         
     @staticmethod
     def get_patch(img, patch_size, index):
