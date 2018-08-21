@@ -33,6 +33,7 @@ def get_args():
     else:
         if args.cont:
             print("Model does not exist")
+            print(args.output_folder)
             sys.exit(0)
         os.makedirs(args.output_folder)
 

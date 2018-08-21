@@ -9,8 +9,8 @@ arg = args.get_args()
 
 #----Load Data---
 print("Loading Images: "+arg.input_folder)
-rgb = load.load_data(arg.input_folder+"/rgb")
-d = load.load_data(arg.input_folder+"/d")
+rgb = load.load_data(arg.input_folder+"/rgb_ng")
+d = load.load_data(arg.input_folder+"/d_ng")
 print("Loaded "+ str(len(rgb)) + " images")
 x = proc.cat_imgs(rgb,d)
 del rgb, d
@@ -42,5 +42,5 @@ for num,i in enumerate(x):
             output[x:x+arg.patch_size[0],y:y+arg.patch_size[1],:] = result[ind]
         
     #output = np.reshape(result, (row, col, -1))
-    output = proc.uncategorize_img(output, [1,3,4,2,6,7], 7)
+    output = proc.uncategorize_img(output, [4,2,6,1,3,7], 7)
     misc.imsave(arg.output_folder+"/test"+str(num)+".png",output)
