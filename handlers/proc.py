@@ -2,13 +2,14 @@ import numpy as np
 
 class Process:
     @classmethod
-    def setup(cls, xs, ys, xs_test,ys_test, patch_size, batch_size, y_is_flat=False, s_l=None, one_hot=True):
+    def setup(cls, xs, ys, xs_test,ys_test, patch_size, batch_size, mean, y_is_flat=False, s_l=None, one_hot=True):
         """Sets up the labels for the network.
         #Arguments
             xs: (list of images) NxWxHxChannels
             ys: (list of images) NxWxHxChannels
             s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
+        cls.mean = mean
         cls.input_shape = patch_size+xs[0].shape[2:]
         cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
         cls.patch_size, cls.batch_size = patch_size, batch_size
@@ -135,21 +136,21 @@ class Process:
 
                 if len(y_train) == cls.batch_size:
                     y_train = np.array(y_train)
-                    x_train = np.array(x_train)
+                    x_train = np.array(x_train)-cls.mean
                     yield x_train, y_train
                     x_train = []
                     y_train = []
         
         
     @staticmethod
-    def generate_predict_patch(image, patch_size, batch_size):
+    def generate_predict_patch(image, patch_size, batch_size, mean):
         x_pred = []
         for r_indx in range(0, image.shape[0], patch_size[0]):
             for c_indx in range(0, image.shape[1], patch_size[0]):
                 x_patch = image[r_indx:r_indx+patch_size[0],c_indx:c_indx+patch_size[1],:]
                 x_pred.append(x_patch)
                 if len(x_pred)==batch_size:
-                    yield np.array(x_pred)
+                    yield np.array(x_pred) - mean
                     x_pred = []
         yield np.array(x_pred)
         
@@ -163,7 +164,10 @@ class Process:
     def select_patch(cls,test=True,image_index=0,index=1500):
         if test:
             x = cls.get_patch(cls.xs_test[image_index],cls.patch_size,index)
-            y = cls.get_patch(cls.ys_test[image_index],cls.patch_size,index)
+            try:
+                y = cls.get_patch(cls.ys_test[image_index],cls.patch_size,index)
+            except:
+                y = np.ones(cls.patch_size+(3,))
         else:
             x = cls.get_patch(cls.xs[image_index],cls.patch_size,index)
             y = cls.get_patch(cls.ys[image_index],cls.patch_size,index)

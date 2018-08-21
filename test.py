@@ -12,7 +12,10 @@ print("Loading Images: "+arg.input_folder)
 rgb = load.load_data(arg.input_folder+"/rgb_ng")
 d = load.load_data(arg.input_folder+"/d_ng")
 print("Loaded "+ str(len(rgb)) + " images")
-x = proc.cat_imgs(rgb,d)
+if arg.no_depth:
+    x = proc.cat_imgs(rgb,rgb)### NO DEPTH
+else:
+    x = proc.cat_imgs(rgb,d)### WITH DEPTH
 del rgb, d
 
 #----KERAS ENV-------
@@ -23,7 +26,8 @@ from keras.models import Model, load_model
 
 print("Loading Model")
 model = load_model(arg.output_folder+'/model.hdf5', compile=False)
-
+train_args = load.get_args(arg.output_folder)
+arg.mean = np.array(train_args['mean'])
 #_!_!_!_!_!_!_RUN NETWORK_!_!_!_!_!_
 print("Running Network")
 
@@ -34,7 +38,7 @@ for num,i in enumerate(x):
     input = np.zeros((row,col)+(i.shape[2],))
     input[:i.shape[0],:i.shape[1],:] = i
     steps = input.shape[0]*input.shape[1]//(arg.patch_size[0]**2)//arg.batch_size
-    result = model.predict_generator(proc.generate_predict_patch(input, arg.patch_size, arg.batch_size), steps=steps+1)
+    result = model.predict_generator(proc.generate_predict_patch(input, arg.patch_size, arg.batch_size, arg.batch_size, arg.mean), steps=steps+1)
     output = np.zeros((input.shape[:2])+(result.shape[3],))
     for x in range(0,row,arg.patch_size[0]):
         for y in range(0,col,arg.patch_size[0]):

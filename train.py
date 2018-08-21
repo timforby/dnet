@@ -9,23 +9,35 @@ arg = args.get_args()
 #----Load Data---
 print("Loading Images")
 rgb = load.load_data(arg.input_folder+"/rgb")
-d = load.load_data(arg.input_folder+"/d")
+rgb_mean = load.get_mean(arg.input_folder+"/rgb")
 
-#x = proc.cat_imgs(rgb,d)### --- WITH DEPTH
-x = proc.cat_imgs(rgb,rgb)### NO DEPTH
+if arg.no_depth:### NO DEPTH
+    x = proc.cat_imgs(rgb,rgb)
+    arg.mean = np.concatenate([rgb_mean,rgb_mean])[:x[0].shape[2]]
+else:### --- WITH DEPTH
+    d_mean = load.get_mean(arg.input_folder+"/d")
+    d = load.load_data(arg.input_folder+"/d")
+    x = proc.cat_imgs(rgb,d)
+    del d
+    arg.mean = np.concatenate([rgb_mean,d_mean])[:x[0].shape[2]]
+del rgb
 y = load.load_data(arg.input_folder+"/y")
 
 #validation
-rgb_ng = load.load_data(arg.input_folder+"/rgb_ng")
-d_ng = load.load_data(arg.input_folder+"/d_ng")
+rgb_ng = load.load_data(arg.input_folder+"/rgb_ng",end=1)
+if arg.no_depth:### NO DEPTH
+    x_ng = proc.cat_imgs(rgb_ng,rgb_ng)
+else:### --- WITH DEPTH
+    d_ng = load.load_data(arg.input_folder+"/d_ng")
+    x_ng = proc.cat_imgs(rgb_ng,d_ng)
+    del d_ng
+del rgb_ng
+y_ng = load.load_data(arg.input_folder+"/y_ng")
 
-x_ng = proc.cat_imgs(rgb_ng,d_ng)
-y_ng = load.load_data(arg.input_folder+"/d_ng")
-
-proc.setup(x,y, x_ng, y_ng, arg.patch_size,arg.batch_size)
+proc.setup(x,y, x_ng, y_ng, arg.patch_size,arg.batch_size, arg.mean)
 #proc.setup(x,y, None, None, arg.patch_size,arg.batch_size)
 
-del x,y,x_ng,y_ng,d,d_ng,rgb,rgb_ng
+del y, y_ng
 
 #----KERAS ENV-------
 os.environ["THEANO_FLAGS"]='device=cuda'+str(arg.gpu)
