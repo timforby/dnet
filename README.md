@@ -6,6 +6,8 @@ Deep Learning FrameWork for Urban Semantic Segmentation
 contact author @ timforby@gmail.com
 
 ## Folder structure
+
+```bash
 .
 ├── dnet
 │   ├── models
@@ -32,6 +34,7 @@ contact author @ timforby@gmail.com
 ├── results
 │   ├── **MODELNAME**
 │   │   └── model.hdf5
+```
 
 ---
 
@@ -41,9 +44,9 @@ contact author @ timforby@gmail.com
 
 ### Training
 
-> python train.py -i ../data/**DATASET** -o ../results -n **SOMEMODELNAME** -p **PATCHSIZE** -b **BATCHSIZE***
+> python train.py -i ../data/**DATASET** -o ../results -n **SOMEMODELNAME** -p **PATCHSIZE** -b **BATCHSIZE**
 
-#### Continue training
+##### Continue training
 
 > python train.py -i ../data/**DATASET** -o ../results -n **MODELNAME** --cont
 
