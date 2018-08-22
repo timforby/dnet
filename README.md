@@ -42,6 +42,8 @@ contact author @ timforby@gmail.com
 
 > cd ./dnet
 
+Before training must run mean.py on dataset.
+
 ### Training
 
 > python train.py -i ../data/**DATASET** -o ../results -n **SOMEMODELNAME** -p **PATCHSIZE** -b **BATCHSIZE**
