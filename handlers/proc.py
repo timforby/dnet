@@ -1,5 +1,6 @@
 import numpy as np
 import aug
+import math
 
 class Process:
     @classmethod
