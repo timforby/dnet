@@ -70,4 +70,4 @@ plotter = plot(arg, proc)
 
 #_!_!_!_!_!_!_RUN NETWORK_!_!_!_!_!_
 print("Running Network")
-model.fit_generator(proc.generate_patch(),steps_per_epoch=64,epochs=500000,callbacks=[checkpointer,plotter],use_multiprocessing=False)
+model.fit_generator(proc.generate_patch(augment=arg.augment),steps_per_epoch=64,epochs=500000,callbacks=[checkpointer,plotter],use_multiprocessing=False)

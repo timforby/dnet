@@ -1,5 +1,5 @@
 import numpy as np
-import aug
+from . import aug
 import math
 
 class Process:

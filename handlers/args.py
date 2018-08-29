@@ -12,6 +12,7 @@ def get_args():
     ar.add_argument('-g','--gpu', type = int, default=0, help = "Please enter GPU to use")
     ar.add_argument('-b','--batch_size', type = int, default=32, help = "Please enter model batch size")
     ar.add_argument('--no_depth', action='store_true', help = "Whether to use depth or not")
+    ar.add_argument('--augment', action='store_true', help = "Whether to augment data")
     ar.add_argument('--iter_load', action='store_true',help="Option to define whether to load images iteratively to minimize memory")
     ar.add_argument('-l','--labels', action='append', help="Option to select specific training labels \nOTHER = 0\nTREE = 1\nBUILDING = 2\nCAR = 3\nVEG = 4\nGROUND = 5")
     ar.add_argument('--cont', action='store_true', help='Option defining whether to continue existing model')
