@@ -38,7 +38,7 @@ for num,i in enumerate(x):
     input = np.zeros((row,col)+(i.shape[2],))
     input[:i.shape[0],:i.shape[1],:] = i
     steps = input.shape[0]*input.shape[1]//(arg.patch_size[0]**2)//arg.batch_size
-    result = model.predict_generator(proc.generate_predict_patch(input, arg.patch_size, arg.batch_size, arg.batch_size, arg.mean), steps=steps+1)
+    result = model.predict_generator(proc.generate_predict_patch(input, arg.patch_size, arg.batch_size, arg.mean), steps=steps+1)
     output = np.zeros((input.shape[:2])+(result.shape[3],))
     for x in range(0,row,arg.patch_size[0]):
         for y in range(0,col,arg.patch_size[0]):

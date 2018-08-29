@@ -29,7 +29,7 @@ def get_mean(path):
     return np.array(mean)
 
 def get_args(path):
-    f = open(arg.output_folder+'/settings.txt','r')
+    f = open(path+'/settings.txt','r')
     train_arg = f.read()
     f.close()
     train_arg = train_arg.split("\n")[:-1]

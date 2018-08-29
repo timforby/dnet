@@ -1,4 +1,5 @@
 import numpy as np
+import aug
 
 class Process:
     @classmethod
@@ -10,7 +11,7 @@ class Process:
             s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
         cls.mean = mean
-        cls.input_shape = patch_size+xs[0].shape[2:]
+        cls.input_shape = (patch_size,patch_size,xs[0].shape[2:])
         cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
         cls.patch_size, cls.batch_size = patch_size, batch_size
         cls.selected_labels = s_l
@@ -21,7 +22,7 @@ class Process:
     @classmethod
     def setup_predict(cls, xs, patch_size, batch_size):
         cls.xs = xs
-        cls.input_shape = patch_size+xs[0].shape[2:]
+        cls.input_shape = (patch_size,patch_size,xs[0].shape[2:])
         cls.patch_size, cls.batch_size = patch_size, batch_size
         
     @staticmethod
@@ -108,14 +109,16 @@ class Process:
     def generate_patch(cls,augment=False):
         x_train = []
         y_train = []
-
+        ps = cls.patch_size
+        if augment:
+            ps = int(math.sqrt(2*ps**2))+1
         while True:
             #Randomizes all possible locations into "patch_locations"
             patch_locations = []
             sum_locations = 0
             all_locations = []
             for y in cls.ys_flat:
-                locations = int((y.shape[0]-cls.patch_size[0])*(y.shape[1]-cls.patch_size[1]))
+                locations = int((y.shape[0]-ps)*(y.shape[1]-ps))
                 sum_locations += locations
                 all_locations.append(locations)
                 patch_locations.append(np.random.permutation(locations))
@@ -126,8 +129,10 @@ class Process:
                 #If patch_index has not reached all locations
                 if patch_index[i] < all_locations[i]:
                     index=patch_locations[i][patch_index[i]]
-                    x_patch = cls.get_patch(cls.xs[i], cls.patch_size, index)
-                    y_patch = cls.get_patch(cls.y_categorize[i], cls.patch_size, index)
+                    x_patch = cls.get_patch(cls.xs[i], ps, index)
+                    y_patch = cls.get_patch(cls.y_categorize[i], ps, index)
+                    if augment:
+                        x_patch,y_patch = aug.augment_patch(x_patch,y_patch,cls.patch_size)
                     x_train.append(x_patch)
                     y_train.append(y_patch)
                     patch_index[i] += 1
@@ -145,9 +150,9 @@ class Process:
     @staticmethod
     def generate_predict_patch(image, patch_size, batch_size, mean):
         x_pred = []
-        for r_indx in range(0, image.shape[0], patch_size[0]):
-            for c_indx in range(0, image.shape[1], patch_size[0]):
-                x_patch = image[r_indx:r_indx+patch_size[0],c_indx:c_indx+patch_size[1],:]
+        for r_indx in range(0, image.shape[0], patch_size):
+            for c_indx in range(0, image.shape[1], patch_size):
+                x_patch = image[r_indx:r_indx+patch_size,c_indx:c_indx+patch_size,:]
                 x_pred.append(x_patch)
                 if len(x_pred)==batch_size:
                     yield np.array(x_pred) - mean
@@ -156,9 +161,9 @@ class Process:
         
     @staticmethod
     def get_patch(img, patch_size, index):
-        x_val = index%(img.shape[0]-patch_size[0])
-        y_val = index//(img.shape[0]-patch_size[0])
-        return img[x_val:x_val+patch_size[0],y_val:y_val+patch_size[1],:]
+        x_val = index%(img.shape[0]-patch_size)
+        y_val = index//(img.shape[0]-patch_size)
+        return img[x_val:x_val+patch_size,y_val:y_val+patch_size,:]
 
     @classmethod
     def select_patch(cls,test=True,image_index=0,index=1500):
@@ -167,7 +172,7 @@ class Process:
             try:
                 y = cls.get_patch(cls.ys_test[image_index],cls.patch_size,index)
             except:
-                y = np.ones(cls.patch_size+(3,))
+                y = np.ones((cls.patch_size,cls.patch_size,3))
         else:
             x = cls.get_patch(cls.xs[image_index],cls.patch_size,index)
             y = cls.get_patch(cls.ys[image_index],cls.patch_size,index)

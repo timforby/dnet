@@ -17,7 +17,6 @@ def get_args():
     ar.add_argument('--cont', action='store_true', help='Option defining whether to continue existing model')
 
     args = ar.parse_args()
-    args.patch_size = (args.patch_size,args.patch_size)
     label = args.labels
     if label:
         label = list(map(int, label)).sort()
