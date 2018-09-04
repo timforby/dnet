@@ -6,7 +6,7 @@ Authors: Timothy Forbes, Charalambos Poullis
 
 Paper PDF: https://tinyurl.com/y73se9zs
 
-Corresponding author: timforby@gmail.com
+Corresponding author: Timothy Forbes - timforby@gmail.com
 
 
 ## Folder structure
