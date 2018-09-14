@@ -1,9 +1,14 @@
 # dnet
 Deep Learning FrameWork for Urban Semantic Segmentation
 
-"Deep Autoencoders with Aggregated Residual Transformations for Urban Reconstruction from Remote Sensing Data" Timothy Forbes, Charalambos Poullis
+"Deep Autoencoders with Aggregated Residual Transformations for Urban Reconstruction from Remote Sensing Data", CRV 2018
 
-contact author @ timforby@gmail.com
+Authors: Timothy Forbes, Charalambos Poullis
+
+Paper PDF: https://tinyurl.com/y73se9zs
+
+Corresponding author: Timothy Forbes - timforby@gmail.com
+
 
 ## Folder structure
 
