@@ -5,37 +5,37 @@ from keras.layers.merge import Concatenate, Add
 from keras.layers.core import Activation, Dense, Reshape, Lambda
 from models.static.block import _conv2D,_conv2DTran,_blocker
 
-def build3(img_size,nclasses):
+def build(img_size,nclasses):
     ps0,ps1,depth = img_size
 
     input = Input((ps0,ps1,depth))#200x200 ,150
-    xinput = _conv2D(32,1,padding="valid")(input)#176, 135
-    a = _conv2D(32,3,padding="valid")(input)#84
-    a1 = _blocker(1,64)(a)#84
-    a2 = MaxPooling2D((2,2))(a1)#88
-    b = _conv2D(64,3,padding="valid")(a2)#84
-    b1 = _blocker(1,128)(b)#84
-    b2 = MaxPooling2D((2,2))(b1)#42
-    c = _conv2D(128,3,padding="valid")(b2)#38
-    c1 = _blocker(1,512)(c)#38
-    c2 = MaxPooling2D((2,2))(c1)#19
-    midl = _conv2D(1024,10,padding="valid")(c2)#10
-    imid = _conv2DTran(512,10,padding="valid")(midl)#19
-    ic2 = UpSampling2D((2,2))(imid)#38
+    xinput = _conv2D(32, 1, padding="same")(input)
+    a = _conv2D(32,3,padding="valid")(input)#148
+    a1 = _blocker(1,64)(a)
+    a2 = MaxPooling2D((2,2))(a1)#74
+    b = _conv2D(64,3,padding="valid")(a2)#72
+    b1 = _blocker(1,128)(b)
+    b2 = MaxPooling2D((2,2))(b1)#36
+    c = _conv2D(128,3,padding="valid")(b2)#34
+    c1 = _blocker(1,512)(c)
+    c2 = MaxPooling2D((2,2))(c1)#17
+    midl = _conv2D(1024,10,padding="valid")(c2)#8
+    imid = _conv2DTran(512,10,padding="valid")(midl)#17
+    ic2 = UpSampling2D((2,2))(imid)#34
     #ic2_a = Concatenate()([ic2,c1])#38
     ic2_c1 = Add()([ic2,c1])#38
     ic1 = _blocker(1,512)(ic2_c1)#38
-    ic = _conv2DTran(128,5,padding="valid")(ic1)#42
+    ic = _conv2DTran(128,3,padding="valid")(ic1)#42
     ib2 = UpSampling2D((2,2))(ic)#84
     #ib2_a = Concatenate()([ib2,b1])#84
     ib2_b1 = Add()([ib2,b1])#84
     ib1 = _blocker(1,128)(ib2_b1)#84
-    ib = _conv2DTran(64,5,padding="valid")(ib1)#88
+    ib = _conv2DTran(64,3,padding="valid")(ib1)#88
     ia2 = UpSampling2D((2,2))(ib)#176
     #ia1_a = Concatenate()([ia1,a])#176
     ia2_a1 = Add()([ia2,a1])#176
     ia1 = _blocker(1,64)(ia2_a1)
-    ia = _conv2DTran(32,5,padding="valid")(ia1)#200
+    ia = _conv2DTran(32,3,padding="valid")(ia1)#200
     ifinal_input = Add()([ia,xinput])
     ifinal = _conv2D(nclasses, 1,padding="valid")(ifinal_input)
     i = Reshape((ps0*ps1,nclasses))(ifinal)
@@ -44,23 +44,26 @@ def build3(img_size,nclasses):
 
     return Model(inputs=input, outputs=out)
 
-def build(img_size,nclasses):
+def build3(img_size,nclasses):
     ps0,ps1,depth = img_size
 
     input = Input((ps0,ps1,depth))
-
+    print(img_size)
     a1 = _blocker(1,32,cardinality=8,dilation=2)(input)
     a2 = MaxPooling2D((2,2))(a1)
 
     b1 = _blocker(1,64,cardinality=16,dilation=2)(a2)
     b2 = MaxPooling2D((2,2))(b1)
-    
+
     c1 = _blocker(1,128,cardinality=32,dilation=1)(b2)
     c2 = MaxPooling2D((2,2))(c1)
-    
+
     midl = _conv2D(256,3,padding="valid")(c2)
     imid = _conv2DTran(128,3,padding="valid")(midl)
-    
+
+    m = Model(inputs=input,outputs=imid)
+    print(m.summary())
+
     ic2 = UpSampling2D((2,2))(imid)
     ic2_c1 = Concatenate()([ic2,c1])
     ic1 = _blocker(1,64,cardinality=32,dilation=1)(ic2_c1)

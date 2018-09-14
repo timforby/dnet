@@ -12,7 +12,7 @@ class Process:
             s_l: (list ints) Selected labels in range(len(classes)) to learn in network
         """
         cls.mean = mean
-        cls.input_shape = (patch_size,patch_size,xs[0].shape[2:])
+        cls.input_shape = (patch_size,patch_size)+xs[0].shape[2:]
         cls.xs,cls.ys,cls.xs_test,cls.ys_test = xs,ys,xs_test,ys_test
         cls.patch_size, cls.batch_size = patch_size, batch_size
         cls.selected_labels = s_l
@@ -178,3 +178,12 @@ class Process:
             x = cls.get_patch(cls.xs[image_index],cls.patch_size,index)
             y = cls.get_patch(cls.ys[image_index],cls.patch_size,index)
         return x,y
+        
+    @staticmethod
+    def patch_factor_resize(image, patch_size):
+        row = (1+image.shape[0]//patch_size)*patch_size
+        col = (1+image.shape[1]//patch_size)*patch_size
+        input = np.zeros((row,col)+(image.shape[2],))
+        input[:image.shape[0],:image.shape[1],:] = image
+        steps = input.shape[0]*input.shape[1]//(patch_size**2)
+        return input,steps
