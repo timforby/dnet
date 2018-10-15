@@ -158,6 +158,8 @@ class Process:
                 if len(x_pred)==batch_size:
                     yield np.array(x_pred) - mean
                     x_pred = []
+        if len(x_pred) == 0:
+            x_pred.append(np.zeros((patch_size,patch_size,image.shape[2])))
         yield np.array(x_pred)
         
     @staticmethod
