@@ -151,6 +151,60 @@ def train_batch(args, disc, gen, batch):
 
     return errD,errG
 
+def train_batch_class(args, disc, gen, batch):
+    discriminator = disc[0]
+    optimizerD = disc[1]
+    criterion = disc[2]
+
+    generator = gen[0]
+    optimizerG = gen[1]
+
+    ####### TRAIN DESCRIMINATOR ######
+    discriminator.zero_grad()
+
+    #TRAIN WITH REAL
+    real_rgb, real_gt, fake_gt = batch
+    real_rgb, _ = real_rgb
+    if args.cuda:
+        real_rgb = real_rgb.cuda()
+        real_gt = real_gt.cuda()
+        fake_gt = fake_gt.cuda()
+
+    output = discriminator(real_rgb)  # GAN_Discriminator train
+    errD_real = criterion(output, real_gt)
+    errD_real.backward()
+
+    #GENERATE FAKE
+    noise = torch.FloatTensor(args.batch_size, args.nz, fake_gt.shape[0], fake_gt.shape[1]).normal_(0, 1)
+    if args.cuda:
+        noise = noise.cuda()
+    fake = generator(noise)  # Generator train
+
+    # TRAIN WITH FAKE
+    output = discriminator(fake.detach()).view(-1, 1).squeeze(1)  # GAN_Discriminator train
+    errD_fake = criterion(output, zero[:output.shape[0]])
+    errD_fake.backward()
+
+    errD = errD_real + errD_fake
+
+    optimizerD.step()
+    clip_weights(discriminator)
+
+    ########## TRAIN GENERATOR ######
+    generator.zero_grad()
+    noise = torch.FloatTensor(args.batch_size, args.nz, 1, 1).normal_(0, 1)
+    if args.cuda:
+        noise = noise.cuda()
+    fake = generator(noise)  # Generator train
+    output = discriminator(fake).view(-1, 1).squeeze(1)
+    errG = criterion(output, ones)  # fake labels are real for generator cost
+    errG.backward()
+    optimizerG.step()
+
+    return errD,errG
+
+
+
 def train(args, ds, gs, dataloader, test_noise):
    
     hist = History(gs, ds, args.niter, len(dataloader))
@@ -163,6 +217,12 @@ def train(args, ds, gs, dataloader, test_noise):
             hist.add_disc(0, eD)
             hist.add_gen(0, eG)
             hist.print_stat(epoch, i, 0)
+
+            eD,eG = train_batch_class(args, ds[1],gs[0],(input,ones,zero))
+            hist.add_disc(1, eD)
+            hist.add_gen(0, eG)
+            hist.print_stat(epoch, i, 1)
+
         if epoch % 2 ==0:
             fake = gs[0][0](test_noise)
             History.save_img(fake, args.outf, epoch, "d0")
