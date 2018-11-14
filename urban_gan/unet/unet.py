@@ -34,12 +34,15 @@ class unet(nn.Module):
 class half_unet(nn.Module):
     def __init__(self, n_channels, n_classes):
         super(half_unet, self).__init__()
-        self.inc = inconv(n_channels, 64)
-        self.down1 = down(64, 128)
-        self.down2 = down(128, 256)
-        self.down3 = down(256, 512)
-        self.down4 = down(512, 512)
-        self.outc = outconv(64, n_classes)
+        self.inc = inconv(n_channels, 16)
+        self.down1 = down(16, 32)
+        self.down2 = down(32, 64)
+        self.down3 = down(64, 128)
+        self.down4 = down(128, 64)
+        self.down5 = down(64, 32)
+        self.down6 = down(32, 16)
+        self.down7 = down(16, 8)
+        self.outc = outconv(8, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -47,5 +50,8 @@ class half_unet(nn.Module):
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-        x = self.outc(x)
+        x6 = self.down5(x5)
+        x7 = self.down6(x6)
+        x8 = self.down7(x7)
+        x = self.outc(x8)
         return x
