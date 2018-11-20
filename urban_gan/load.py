@@ -17,6 +17,7 @@ def value_pass(val):
         return False
     return True
 
+
 def parse_mean(mean):
     mean = mean[1:-1].split(" ")
     mean = [float(num) for num in mean if value_pass(num)]
@@ -42,7 +43,7 @@ def get_args(path):
     return d
     
 # Load images in given directory
-def load_imgs(dir_name, start, end, step):
+def load_imgs(dir_name, start, end, step, details_only):
     fnames = get_filenames(dir_name)
     imgs = []
     count = 0
@@ -51,7 +52,11 @@ def load_imgs(dir_name, start, end, step):
             continue
         count += 1
         img = load_img(dir_name,imgname)
-        imgs.append(img)
+		if details_only:
+			imgs.append((imgname,img.shape[0],img.shape[1]))
+			del img
+		else:
+			imgs.append(img)
     return imgs
 
     
@@ -63,7 +68,7 @@ def load_img(dir_name, imgname):
         img = np.reshape(img,(img.shape[0],img.shape[1],1))
     return img
 
-def load_data(path, start=0, end=999, step=1):
+def load_data(path, start=0, end=999, step=1, details_only=False):
     """Load images into a list
     #Arguments
         paths: List of strings representing paths to folders containing
@@ -71,7 +76,7 @@ def load_data(path, start=0, end=999, step=1):
         start,end,step: Refers to the number of name of images. Only loads
             images with in this range.
     """
-    imgs = load_imgs(path,start,end,step)
+    imgs = load_imgs(path,start,end,step, details_only)
 
     return imgs
     
