@@ -14,9 +14,12 @@ class loader:
 
 		cls.data_details = load.load_data(paths[0], dimensions_only=True)
 		cls.mean = load.get_mean(paths[0])
-		cls.generate_traverse()
+		
 		
 	def generate_traverse(cls):
+        #data details holds (shape0, shape1,path)
+        #data traverse holds permute(0,1,2,...,shape0*shape1) minus patch size
+        #data tracker = data details copy (shape0,shape1,path)
 		cls.data_traverse = []
 		cls.data_tracker = []
 		for dim in cls.data_details:
@@ -24,7 +27,15 @@ class loader:
 			cls.data_tracker.append(dim)
 	
 	def generate_patch(cls):
-
+        while True:
+            cls.generate_traverse()
+            while len(data_tracker) > 0:
+                #get number images, 
+                num_data = len(data_tracker)
+                #get samples per images
+                
+    
+    
         while True:
             #Randomizes all possible locations into "patch_locations"
             patch_locations = []

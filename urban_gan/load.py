@@ -53,7 +53,7 @@ def load_imgs(dir_name, start, end, step, details_only):
         count += 1
         img = load_img(dir_name,imgname)
 		if details_only:
-			imgs.append((imgname,img.shape[0],img.shape[1]))
+			imgs.append((img.shape[0],img.shape[1],imgname))
 			del img
 		else:
 			imgs.append(img)
