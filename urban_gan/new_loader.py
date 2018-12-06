@@ -13,8 +13,15 @@ class loader:
         cls.batch_size = batch_size
         cls.augment = augment
 
-        cls.data_details = load.load_data(paths[0], details_only=True)
-        cls.data = load.load_data(paths[0])
+        cls.data_details = []
+        cls. data = []
+
+        for path in paths:
+            cls.data_details.append(load.load_data(path, details_only=True))
+            cls.data.append(load.load_data(path))
+
+        #ASSERT ALL SAME SIZE??? 
+
         cls.mean = load.get_mean(paths[0])
         
     @classmethod        
@@ -22,7 +29,7 @@ class loader:
         #data details holds (shape0, shape1,path)
         #data traverse holds permute(0,1,2,...,shape0*shape1) minus patch size
         cls.data_traverse = []
-        for x,y,path in cls.data_details:
+        for x,y,path in cls.data_details[0]:
             cls.data_traverse.append(np.random.permutation(np.arange((x-cls.patch_size) * (y-cls.patch_size))).tolist())
 
     @classmethod
@@ -30,31 +37,32 @@ class loader:
         while True:
             cls.generate_traverse()
             #get number images, 
-            num_data = len(cls.data_details)
+            num_data = len(cls.data_details[0])
             #get samples per images
             samples_per_image = cls.calc_samples_per_image(num_data)
-            patches = []
+            patches_path = []
+            batch_index = 0
+            for j in  range(len(cls.data_details)):
+                patches_path.append(np.zeros((cls.batch_size,cls.patch_size,cls.patch_size,3)))
             empty_image_index = []
             empty_image_trigger = False
             while len(empty_image_index) <= num_data:
-
-
                 iterate_list = np.arange(num_data)
                 if empty_image_trigger:
                     empty_image_trigger = False
                     iterate_list = np.setdiff1d(iterate_list,empty_image_index)
                     samples_per_image = cls.calc_samples_per_image(len(iterate_list))
-
                 for i in np.random.permutation(iterate_list).tolist():
                     for s in range(samples_per_image):
-                        patches.append(cls.get_patch(i, cls.data_traverse[i].pop()))
+                        for path_index,patches in enumerate(patches_path):
+                            patches[batch_index,:,:,:] = cls.get_patch(path_index, i, cls.data_traverse[i].pop())
                         if not cls.data_traverse[i]:
                             empty_image_trigger = True
                             empty_image_index.append(i)
-
-                        if len(patches) == cls.batch_size:
-                            yield(np.array(patches))
-                            patches = []
+                        batch_index +=1
+                        if batch_index == cls.batch_size:
+                            yield(patches_path)
+                            batch_index = 0
 
     @classmethod
     def calc_samples_per_image(cls, num_data):
@@ -63,12 +71,12 @@ class loader:
         return spi
 
     @classmethod
-    def get_patch(cls, image_index, index):
+    def get_patch(cls, path_index, image_index, index):
         try:
-            img = cls.data[image_index]
+            img = cls.data[path_index][image_index]
         except:#NEEDS FIXING
-            img = load.load_img(cls.data_details[image_index][2])
-            cls.data[image_index] = img
+            img = load.load_img(cls.data_details[path_index][image_index][2])
+            cls.data[path_index][image_index] = img
 
         x_val = index%(img.shape[0]-cls.patch_size)
         y_val = index//(img.shape[0]-cls.patch_size)
@@ -77,8 +85,9 @@ class loader:
 
 
 lo = loader()
-lo.setup(["C:\\Users\\abc\\Documents\\urbann\\data\\test\\rgb_ng"],150,32)
+lo.setup(["C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\rgb","C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\y"],150,32)
 x = lo.generate_patch()
 for i,p in enumerate(x):
     print(i)
-    print(p.shape)
+    print(p[0].shape)
+    print(p[1].shape)
