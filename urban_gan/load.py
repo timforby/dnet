@@ -48,21 +48,21 @@ def load_imgs(dir_name, start, end, step, details_only):
     imgs = []
     count = 0
     for imgname in fnames:
+        path = os.path.join(dir_name, imgname)
         if count not in range(start,end,step):
             continue
         count += 1
-        img = load_img(dir_name,imgname)
-		if details_only:
-			imgs.append((img.shape[0],img.shape[1],imgname))
-			del img
-		else:
-			imgs.append(img)
+        img = load_img(path)
+        if details_only:
+            imgs.append((img.shape[0],img.shape[1],path))
+            del img
+        else:
+            imgs.append(img)
     return imgs
 
     
-def load_img(dir_name, imgname):
-    fullpath = os.path.join(dir_name, imgname)
-    img = cv2.imread(fullpath)
+def load_img(path):
+    img = cv2.imread(path)
     img = img/255.0
     if len(img.shape) ==2:
         img = np.reshape(img,(img.shape[0],img.shape[1],1))
