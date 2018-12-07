@@ -34,35 +34,38 @@ class loader:
 
     @classmethod
     def generate_patch(cls):
+        #get number images, 
+        num_data = len(cls.data_details[0])
+        #get samples per images
+        samples_per_image = cls.calc_samples_per_image(num_data)
+        patches_path = []
+        batch_index = 0
+        for j in  range(len(cls.data_details)):
+            patches_path.append(np.zeros((cls.batch_size,cls.patch_size,cls.patch_size,3)))
+        empty_image_index = []
+        empty_image_trigger = False
+        iterate_list = np.arange(num_data)
         while True:
             cls.generate_traverse()
-            #get number images, 
-            num_data = len(cls.data_details[0])
-            #get samples per images
-            samples_per_image = cls.calc_samples_per_image(num_data)
-            patches_path = []
-            batch_index = 0
-            for j in  range(len(cls.data_details)):
-                patches_path.append(np.zeros((cls.batch_size,cls.patch_size,cls.patch_size,3)))
-            empty_image_index = []
-            empty_image_trigger = False
             while len(empty_image_index) <= num_data:
-                iterate_list = np.arange(num_data)
                 if empty_image_trigger:
                     empty_image_trigger = False
                     iterate_list = np.setdiff1d(iterate_list,empty_image_index)
+                    print(iterate_list)
                     samples_per_image = cls.calc_samples_per_image(len(iterate_list))
-                for i in np.random.permutation(iterate_list).tolist():
+                for image_index in np.random.permutation(iterate_list).tolist():
                     for s in range(samples_per_image):
+                        index = cls.data_traverse[image_index].pop()
                         for path_index,patches in enumerate(patches_path):
-                            patches[batch_index,:,:,:] = cls.get_patch(path_index, i, cls.data_traverse[i].pop())
-                        if not cls.data_traverse[i]:
-                            empty_image_trigger = True
-                            empty_image_index.append(i)
+                            patches[batch_index,:,:,:] = cls.get_patch(path_index, image_index, index)
                         batch_index +=1
                         if batch_index == cls.batch_size:
                             yield(patches_path)
-                            batch_index = 0
+                            batch_index = 0      
+                        if len(cls.data_traverse[image_index]) == 0:
+                            empty_image_trigger = True
+                            empty_image_index.append(image_index)
+                            break
 
     @classmethod
     def calc_samples_per_image(cls, num_data):
@@ -85,9 +88,11 @@ class loader:
 
 
 lo = loader()
-lo.setup(["C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\rgb","C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\y"],150,32)
+#lo.setup(["C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\rgb","C:\\Users\\abc\\Documents\\urbann\\data\\vaihingen\\y"],150,16)
+lo.setup(["test_image","test_image"],519,8)
 x = lo.generate_patch()
 for i,p in enumerate(x):
-    print(i)
-    print(p[0].shape)
-    print(p[1].shape)
+    pass
+    #print(i)
+    #print(p[0].shape)
+    #print(p[1].shape)
