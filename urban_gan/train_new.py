@@ -1,6 +1,3 @@
-import os
-os.chdir("C:\\Users\\abc\\Documents\\urbann\\dnet\\urban_gan")
-
 import numpy as np
 import load
 from unet.unet import unet, half_unet
@@ -13,12 +10,24 @@ import torchvision.utils as vutils
 
 def rgb_to_binary(y):
     y = y[:,:,0]+(2*y[:,:,1])+(4*y[:,:,2])
-    y = y.astype(np.int)
+    y = np.expand_dims(y.astype(np.int),axis=2)
     #_1dy = y.reshape((y.size))
     #_2dy = np.zeros((_1dy.shape[0], 8),dtype=np.int)
     #_2dy[np.arange(_1dy.shape[0]),_1dy] = 1
     #y = _2dy.reshape((y.shape[:2]+(8,)))
     return y
+
+def cat_batch(ys):
+    result = np.zeros((ys.shape[:-1]+(1,)))
+    for i in range(ys.shape[0]):
+        y = ys[i,:,:,:]
+        y = rgb_to_binary(y)
+        #_1dy = y.reshape((y.size))
+        #_2dy = np.zeros((_1dy.shape[0], 8),dtype=np.int)
+        #_2dy[np.arange(_1dy.shape[0]),_1dy] = 1
+        #result[i,:,:,:] = _2dy.reshape((y.shape[:2]+(8,)))      
+        result[i,:,:,:] = y   
+    return result
 
 def binary_to_rgb(y):  
     y = y.reshape(y.shape[0], y.shape[1], 1)
@@ -26,10 +35,10 @@ def binary_to_rgb(y):
     return y
 
 img_size = 144
-batch_size = 32
+batch_size = 2
 
 print("Net setup")
-rgb_generator = unet(8,3)
+rgb_generator = unet(5,3)
 rgb_generator_opt = torch.optim.Adam(rgb_generator.parameters())
 rgb_generator.cuda()
 
@@ -44,34 +53,37 @@ rgb_segment_criterion = nn.CrossEntropyLoss()
 rgb_segment.cuda()
 
 print("Data setup")
-rgb_wi_gt_data = loader()
-rgb_wi_gt_data.setup(["../../data/vaihingen/y","../../data/vaihingen/rgb"],img_size,batch_size,transformations=[None,rgb_to_binary])
-
-rgb_no_gt_data = loader()
-rgb_no_gt_data.setup(["../../data/test/rgb_ng"],img_size,batch_size)
-
-
+rgb_wi_gt_data = loader(["test_image/rgb","test_image/y"],img_size,batch_size,transformations=[None,rgb_to_binary])
+#rgb_wi_gt_data = loader(["../../data/vaihingen/y","../../data/vaihingen/rgb"],img_size,batch_size,transformations=[None,rgb_to_binary])
 data_wi_gt = rgb_wi_gt_data.generate_patch()
+
+
+rgb_no_gt_data = loader(["test_image"],img_size,batch_size)
 data_no_gt = rgb_no_gt_data.generate_patch()
+
+fake_gt_data = loader(["test_image/y"],img_size,batch_size)
+data_fake_gt = fake_gt_data.generate_patch()
 
 ones = torch.FloatTensor(batch_size).fill_(1).cuda()
 zero = torch.FloatTensor(batch_size).fill_(0).cuda()
 
 print("Running...")
+counter = 1
 for epoch in range(1000):
-    counter = -1
-    for x,y,z in zip(data_wi_gt,data_no_gt):
-    
-    
+    for (x,y),(z,),(fy,) in zip(data_wi_gt,data_no_gt,data_fake_gt):
+        fy_cat = cat_batch(fy)
         y = y.transpose([0,3,1,2])
         x = x.transpose([0,3,1,2])
         z = z.transpose([0,3,1,2])
+        fy = fy.transpose([0,3,1,2])
+        fy_cat = fy_cat.transpose([0,3,1,2])
         
         print("counter: "+str(counter))
         counter += 1
         
         
-        fake_gt = torch.from_numpy(y).float()
+        fake_gt = torch.from_numpy(fy).float()
+        fake_gt_cat = torch.from_numpy(fy_cat.squeeze(1)).long().cuda()
 
         noise = torch.FloatTensor(batch_size, 2, img_size, img_size).normal_(0, 1)
         rgb_generator_input = torch.cat((fake_gt,noise),1).cuda()
@@ -79,7 +91,7 @@ for epoch in range(1000):
 
         rgb_no_gt_input = torch.from_numpy(z).cuda().float()
         rgb_wi_gt_input = torch.from_numpy(x).cuda().float()
-        rgb_gt_input = torch.from_numpy(y).cuda().long()
+        rgb_gt_input = torch.from_numpy(y.squeeze(1)).cuda().long()
         #DISCRIMINATOR
         disc.zero_grad()
         disc_ouput = disc(rgb_no_gt_input).view(-1, 1).squeeze(1) 
@@ -112,7 +124,7 @@ for epoch in range(1000):
         errS_real.backward()
 
         rgb_segment_output = rgb_segment(fake_rgb.detach())
-        errS_fake = rgb_segment_criterion(rgb_segment_output, fake_gt.long().cuda())
+        errS_fake = rgb_segment_criterion(rgb_segment_output, fake_gt_cat)
         errS_fake.backward()
 
         errS = errS_real + errS_fake
@@ -124,7 +136,7 @@ for epoch in range(1000):
 
         fake_rgb = rgb_generator(rgb_generator_input)
         rgb_segment_output = rgb_segment(fake_rgb)
-        errG_s = rgb_segment_criterion(rgb_segment_output, fake_gt.argmax(dim=1,keepdim=True).squeeze().long().cuda())
+        errG_s = rgb_segment_criterion(rgb_segment_output, fake_gt_cat)
         errG_s.backward()
 
         errG = errG_d + errG_s
