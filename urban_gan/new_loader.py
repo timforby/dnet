@@ -4,7 +4,7 @@ import numpy as np
 class loader:
 
     @classmethod
-    def setup(cls, paths, patch_size, batch_size, augment=False):
+    def setup(cls, paths, patch_size, batch_size, transformations=[], augment=False):
         cls.orig_patch_size = patch_size
         if augment:
             patch_size = int(math.sqrt(2*cls.orig_patch_size**2))+1
@@ -21,7 +21,11 @@ class loader:
             cls.data.append(load.load_data(path))
 
         #ASSERT ALL SAME SIZE??? 
-
+        
+        for i,trans in enumerate(transformations):
+            for j in range(len(cls.data[i])):
+                cls.data[i][j] = trans(cls.data[i][j])
+        
         cls.mean = load.get_mean(paths[0])
         
     @classmethod        
@@ -40,8 +44,8 @@ class loader:
         samples_per_image = cls.calc_samples_per_image(num_data)
         patches_path = []
         batch_index = 0
-        for j in  range(len(cls.data_details)):
-            patches_path.append(np.zeros((cls.batch_size,cls.patch_size,cls.patch_size,3)))
+        for j in range(len(cls.data_details)):
+            patches_path.append(np.zeros((cls.batch_size,cls.patch_size,cls.patch_size,cls.data[j,0].shape[2])))
         empty_image_index = []
         empty_image_trigger = False
         iterate_list = np.arange(num_data)
