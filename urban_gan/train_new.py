@@ -35,7 +35,7 @@ def binary_to_rgb(y):
     return y
 
 img_size = 144
-batch_size = 2
+batch_size = 32
 
 print("Net setup")
 rgb_generator = unet(5,3)
@@ -53,15 +53,14 @@ rgb_segment_criterion = nn.CrossEntropyLoss()
 rgb_segment.cuda()
 
 print("Data setup")
-rgb_wi_gt_data = loader(["test_image/rgb","test_image/y"],img_size,batch_size,transformations=[None,rgb_to_binary])
-#rgb_wi_gt_data = loader(["../../data/vaihingen/y","../../data/vaihingen/rgb"],img_size,batch_size,transformations=[None,rgb_to_binary])
+#rgb_wi_gt_data = loader(["test_image/rgb","test_image/y"],img_size,batch_size,transformations=[None,rgb_to_binary])
+rgb_wi_gt_data = loader(["../../data/vaihingen/rgb","../../data/vaihingen/y"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/vaihingen/rgb"),rgb_to_binary])
 data_wi_gt = rgb_wi_gt_data.generate_patch()
 
 
-rgb_no_gt_data = loader(["test_image"],img_size,batch_size)
+rgb_no_gt_data = loader(["../../data/test/rgb_ng"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/test/rgb_ng")])
 data_no_gt = rgb_no_gt_data.generate_patch()
-
-fake_gt_data = loader(["test_image/y"],img_size,batch_size)
+fake_gt_data = loader(["../../data/vaihingen/y"],img_size,batch_size)
 data_fake_gt = fake_gt_data.generate_patch()
 
 ones = torch.FloatTensor(batch_size).fill_(1).cuda()

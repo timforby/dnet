@@ -2,7 +2,7 @@ import load
 import numpy as np
 
 class loader:  
-    def __init__(self, paths, patch_size, batch_size, transformations=[], augment=False):
+    def __init__(self, paths, patch_size, batch_size, transformations=[], augment=False, mean=True):
         self.orig_patch_size = patch_size
         if augment:
             patch_size = int(math.sqrt(2*self.orig_patch_size**2))+1
@@ -24,9 +24,8 @@ class loader:
             if trans:
                 for j in range(len(self.data[i])):
                     self.data[i][j] = trans(self.data[i][j])
-            
-        #self.mean = load.get_mean(paths[0])
-               
+        
+
     def generate_traverse(self):
         #data details holds (shape0, shape1,path)
         #data traverse holds permute(0,1,2,...,shape0*shape1) minus patch size
