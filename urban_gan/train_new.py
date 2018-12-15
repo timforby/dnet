@@ -36,7 +36,7 @@ def binary_to_rgb(y):
 
 def clip_weights(model: nn.Module):
     for p in model.parameters():
-        p.data.clamp_(-0.05, 0.05)
+        p.data.clamp_(-0.01, 0.01)
 
     
 img_size = 144
@@ -128,11 +128,12 @@ for epoch in range(1000):
         rgb_generator.zero_grad()
         #forward with random + ground truth to generated distrib
         fake_rgb = rgb_generator(rgb_generator_input)
-        disc_ouput = disc(fake_rgb).view(-1, 1).squeeze(1)
+        disc_ouput = disc(fake_rgb).squeeze()
         errG_d = disc_criterion(disc_ouput, ones)
         errG_d.backward()
         #rgb_generator_opt.step()
 
+        '''
 
         #SEGNET
         rgb_segment.zero_grad()
@@ -148,6 +149,7 @@ for epoch in range(1000):
         errSegnet.append(errS.item())
         rgb_segment_opt.step()
 
+        
         #GENERATOR -> SEGNET
         noise = torch.FloatTensor(batch_size, 2, img_size, img_size).normal_(0, 1)
         rgb_generator_input = torch.cat((fake_gt,noise),1).cuda()
@@ -156,15 +158,16 @@ for epoch in range(1000):
         rgb_segment_output = rgb_segment(fake_rgb)
         errG_s = rgb_segment_criterion(rgb_segment_output, fake_gt_cat)
         errG_s.backward()
-
-        errG = errG_d + errG_s
+        errorS
+        '''
+        errG = errG_d# + errG_s
         errGenerator.append(errG.item())  
         rgb_generator_opt.step()
 
         if counter % 20 == 0:
             print("Error discriminator: "+str(sum(errDiscriminitor)/len(errDiscriminitor))) 
-            print("Error segnet: "+str(sum(errSegnet)/len(errSegnet))) 
+            #print("Error segnet: "+str(sum(errSegnet)/len(errSegnet))) 
             print("Error generator: "+str(sum(errGenerator)/len(errGenerator))) 
         if counter % 500 == 0:
-            vutils.save_image(fake_rgb,'%s/%03d_epoch_%s.png' % (".", counter, "fake_rgb"),normalize=True)
+            vutils.save_image(fake_rgb,'%s/%03d_epoch_%s.png' % (".", counter, "fake_rgb"),normalize=False)
             vutils.save_image(fake_gt,'%s/%03d_epoch_%s.png' % (".", counter, "fake_gt"),normalize=False)
