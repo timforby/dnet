@@ -63,11 +63,11 @@ def load_imgs(dir_name, start, end, step, details_only):
     
 def load_img(path):
     img = cv2.imread(path)
-    img = img/255.0
     if len(img.shape) ==2:
         img = np.reshape(img,(img.shape[0],img.shape[1],1))
     else:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = img/255.0
     return img
 
 def load_data(path, start=0, end=999, step=1, details_only=False):
