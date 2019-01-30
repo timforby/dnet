@@ -42,20 +42,20 @@ def clip_weights(model: nn.Module):
     
 img_size = 144
 batch_size = 32
+lr = 0.0002
+beta1 = 0.5
+
 
 print("Net setup")
 rgb_generator = unet(5,3)
-#rgb_generator_opt = torch.optim.Adam(rgb_generator.parameters())
-rgb_generator_opt = torch.optim.RMSprop(rgb_generator.parameters())
+rgb_generator_opt = torch.optim.Adam(rgb_generator.parameters(), lr=lr, betas=(beta1, 0.999))
 rgb_generator.cuda()
 
-disc = half_unet(3,1)
-#disc_opt = torch.optim.Adam(disc.parameters())
-disc_opt = torch.optim.RMSprop(disc.parameters())
-disc_criterion = nn.L1Loss()
+#disc = half_unet(3,1)
+#disc_opt = torch.optim.SGD(disc.parameters(), lr=0.01)
 #disc_criterion = nn.BCELoss()
-disc.cuda()
-clip_weights(disc)
+#disc.cuda()
+#clip_weights(disc)
 
 rgb_segment = unet(3,6)
 rgb_segment_opt = torch.optim.Adam(rgb_generator.parameters())
@@ -63,16 +63,14 @@ rgb_segment_criterion = nn.CrossEntropyLoss()
 rgb_segment.cuda()
 
 print("Data setup")
-#rgb_wi_gt_data = loader(["test_image/rgb","test_image/y"],img_size,batch_size,transformations=[None,rgb_to_binary])
-#rgb_wi_gt_data = loader(["../../data/vaihingen/rgb","../../data/vaihingen/y"],img_size,batch_size,transformations=[None,rgb_to_binary])
-rgb_wi_gt_data = loader(["../../data/vaihingen/rgb","../../data/vaihingen/y"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/vaihingen/rgb"),rgb_to_binary])
+rgb_wi_gt_data = loader(["../../data/small_potsdam/rgb","../../data/small_potsdam/y"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/small_potsdam/rgb"),rgb_to_binary])
 data_wi_gt = rgb_wi_gt_data.generate_patch()
 
 #rgb_no_gt_data = loader(["../../data/test/rgb_ng"],img_size,batch_size,transformations=[])
-rgb_no_gt_data = loader(["../../data/test/rgb_ng"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/test/rgb_ng")])
-data_no_gt = rgb_no_gt_data.generate_patch()
-fake_gt_data = loader(["../../data/vaihingen/y"],img_size,batch_size)
-data_fake_gt = fake_gt_data.generate_patch()
+#rgb_no_gt_data = loader(["../../data/test/rgb_ng"],img_size,batch_size,transformations=[lambda x: x-load.get_mean("../../data/test/rgb_ng")])
+#data_no_gt = rgb_no_gt_data.generate_patch()
+#fake_gt_data = loader(["../../data/vaihingen/y"],img_size,batch_size)
+#data_fake_gt = fake_gt_data.generate_patch()
 
 ones = torch.FloatTensor(batch_size).fill_(1).cuda()
 zero = torch.FloatTensor(batch_size).fill_(0).cuda()
@@ -83,29 +81,59 @@ for epoch in range(1000):
     errDiscriminitor = []
     errSegnet = []
     errGenerator = []
-    for (x,y),(z,),(fy,) in zip(data_wi_gt,data_no_gt,data_fake_gt):
-        fy_cat = cat_batch(fy)
-        y = y.transpose([0,3,1,2])
+    for (x,y_bin) in data_wi_gt:
         x = x.transpose([0,3,1,2])
-        z = z.transpose([0,3,1,2])
-        fy = fy.transpose([0,3,1,2])
-        fy_cat = fy_cat.transpose([0,3,1,2])
-        
-        #print("counter: "+str(counter))
+        y = y_bin.transpose([0,3,1,2])
+        y_t = torch.from_numpy(y).cuda().float()
+  
         counter += 1
         
         
-        fake_gt = torch.from_numpy(fy).float()
-        fake_gt_cat = torch.from_numpy(fy_cat.squeeze(1)).long().cuda()
+        #fake_gt = torch.from_numpy(fy).float()
+        #fake_gt_cat = torch.from_numpy(fy_cat.squeeze(1)).long().cuda
+        #noise = torch.FloatTensor(batch_size, 2, img_size, img_size).normal_(0, 1)
+        #rgb_generator_input = torch.cat((fake_gt,noise),1).cuda()
+        #fake_rgb = rgb_generator(rgb_generator_input)
 
+        #rgb_no_gt_input = torch.from_numpy(z).cuda().float()
+        #rgb_wi_gt_input = torch.from_numpy(x).cuda().float()
+        rgb_gt_input = torch.from_numpy(y.squeeze(1)).cuda().long()
+        
+        real_rgb = torch.from_numpy(x).cuda().float()
+        
+
+        rgb_segment.zero_grad()
+        rgb_segment_output = rgb_segment(real_rgb)
+        errS_real = rgb_segment_criterion(rgb_segment_output, rgb_gt_input)
+        errS_real.backward()
+
+        D_x = rgb_segment_output.mean().item()
+
+         #GENERATOR -> DISCRIMINATOR
         noise = torch.FloatTensor(batch_size, 2, img_size, img_size).normal_(0, 1)
-        rgb_generator_input = torch.cat((fake_gt,noise),1).cuda()
+        rgb_generator_input = torch.cat(((y_t+1)/4.0-1.0,noise),1).cuda()
         fake_rgb = rgb_generator(rgb_generator_input)
 
-        rgb_no_gt_input = torch.from_numpy(z).cuda().float()
-        rgb_wi_gt_input = torch.from_numpy(x).cuda().float()
-        rgb_gt_input = torch.from_numpy(y.squeeze(1)).cuda().long()
-        #DISCRIMINATOR
+        rgb_segment_output = rgb_segment(fake_rgb.detach())
+        errS_fake = rgb_segment_criterion(rgb_segment_output, rgb_gt_input)
+        errS_fake.backward()
+        D_G_z1 = rgb_segment_output.mean().item()
+
+        errD = errS_real + errS_fake
+        rgb_segment_opt.step()
+
+
+        rgb_generator.zero_grad()
+        #forward with random + ground truth to generated distrib
+        rgb_segment_output = rgb_segment(fake_rgb).squeeze()
+        errG = rrgb_segment_criterion(rgb_segment_output, )
+        errG.backward()
+        #rgb_generator_opt.step()
+
+
+
+        '''
+        DISCRIMINATOR
         disc.zero_grad()
         #forward with desired distribution
         disc_ouput = disc(rgb_no_gt_input).squeeze()
@@ -119,8 +147,10 @@ for epoch in range(1000):
         errD = errD_real + errD_fake
         disc_opt.step()
         errDiscriminitor.append(errD.item())
+        '''
+        
 
-        clip_weights(disc)
+
         
         #GENERATOR -> DISCRIMINATOR
         noise = torch.FloatTensor(batch_size, 2, img_size, img_size).normal_(0, 1)
