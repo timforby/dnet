@@ -4,6 +4,7 @@ from unet.unet import unet, half_unet
 from new_loader import loader
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from random import randint
 import torchvision.utils as vutils
 
