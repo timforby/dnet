@@ -23,8 +23,6 @@ else:### --- WITH DEPTH
     arg.mean = np.concatenate([rgb_mean,d_mean])[:x[0].shape[2]]
 del rgb
 y = load.load_data(arg.input_folder+"/y")
-#for sy in y:
-#    sy *= 5
 
 
 #validation
