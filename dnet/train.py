@@ -34,7 +34,7 @@ else:### --- WITH DEPTH
 del rgb_ng
 y_ng = load.load_data(arg.input_folder+"/y_ng")
 
-proc.setup(x,y, x_ng, y_ng, arg.patch_size,arg.batch_size, arg.mean)
+proc.setup(x,y, x_ng, y_ng, arg.patch_size,arg.batch_size, arg.mean, y_is_flat=True)
 #proc.setup(x,y, None, None, arg.patch_size,arg.batch_size)
 
 del y, y_ng

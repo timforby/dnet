@@ -35,7 +35,7 @@ class Process:
         ys_sc = []
         unique = np.array([],dtype=np.int)
         for i in range(len(ys)):
-            y = Process.to_single_channel(ys[i]) if not y_is_flat else ys[i]
+            y = Process.to_single_channel(ys[i]) if not y_is_flat else ys[i].astype(np.int)
             ys_sc.append(y)#flattening
             unique = np.concatenate([unique, np.unique(ys_sc[-1])])
         return ys_sc, np.unique(unique)

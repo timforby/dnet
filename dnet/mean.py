@@ -9,11 +9,12 @@ arg = args.get_args()
 print("Loading Images")
 rgb = load.get_filenames(arg.input_folder)
 
-siz = [0,0,0]
-sum = [0,0,0]
+channels = load.load_img(arg.input_folder, rgb[0]).shape[2]
+siz = [0] * channels
+sum = [0] * channels
 for x in rgb:
     x = load.load_img(arg.input_folder, x)
-    for i in range(3):
+    for i in range(channels):
         sum[i] += np.sum(x[:,:,i])
         siz[i] += x.shape[0]*x.shape[1]
         
