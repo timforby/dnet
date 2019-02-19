@@ -17,8 +17,22 @@ class Process:
         cls.patch_size, cls.batch_size = patch_size, batch_size
         cls.selected_labels = s_l
         cls.ys_flat, cls.y_classes = cls.get_classes(ys, y_is_flat)
+        cls.integerize()
         cls.max_label = int(np.max(cls.y_classes)+1)
         cls.y_categorize = cls.categorize_y(cls.ys_flat) if one_hot else cls.ys_flat
+
+
+    @classmethod
+    def integerize(cls):
+        if cls.y_classes[1]<1:
+            factor = 1/cls.y_classes[1]
+            cls.y_classes *= factor
+            cls.y_classes = cls.y_classes.astype(np.int)
+            tmp = []
+            for y in cls.ys_flat:
+                y *= factor
+                tmp.append(y.astype(np.int))
+            cls.ys_flat = tmp
 
     @classmethod
     def setup_predict(cls, xs, patch_size, batch_size):
@@ -35,7 +49,7 @@ class Process:
         ys_sc = []
         unique = np.array([],dtype=np.int)
         for i in range(len(ys)):
-            y = Process.to_single_channel(ys[i]) if not y_is_flat else ys[i].astype(np.int)
+            y = Process.to_single_channel(ys[i]) if not y_is_flat else ys[i][:,:,:1]#.astype(np.int)
             ys_sc.append(y)#flattening
             unique = np.concatenate([unique, np.unique(ys_sc[-1])])
         return ys_sc, np.unique(unique)

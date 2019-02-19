@@ -11,6 +11,7 @@ print("Loading Images")
 rgb = load.load_data(arg.input_folder+"/rgb")
 rgb_mean = load.get_mean(arg.input_folder+"/rgb")
 
+
 if arg.no_depth:### NO DEPTH
     x = proc.cat_imgs(rgb,rgb)
     arg.mean = np.concatenate([rgb_mean,rgb_mean])[:x[0].shape[2]]
@@ -22,6 +23,9 @@ else:### --- WITH DEPTH
     arg.mean = np.concatenate([rgb_mean,d_mean])[:x[0].shape[2]]
 del rgb
 y = load.load_data(arg.input_folder+"/y")
+#for sy in y:
+#    sy *= 5
+
 
 #validation
 rgb_ng = load.load_data(arg.input_folder+"/rgb_ng",end=1)
