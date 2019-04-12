@@ -41,6 +41,7 @@ class ListDataset(Dataset):
             # Handles images with one channel
             if len(img.shape) == 2:
                 img = np.reshape(img,(img.shape[0],img.shape[1],1))
+            img = img[:,:,::-1]/255.0
             imgs.append(img)
             imgs_path.append(img_path)
 
@@ -52,9 +53,10 @@ class ListDataset(Dataset):
                 +imgs_path[i][self.image_index % self.data_length]
 
         self.current_patches = []
+        seed = np.random.randint(1e4)
         for img in imgs:
             mp = self.patch_lengths[self.image_index]
-            self.current_patches.append(patchify(img,self.patch_shape,max_patches=mp,random_state=0).transpose([0,3,1,2]))
+            self.current_patches.append(patchify(img,self.patch_shape,max_patches=mp,random_state=seed).transpose([0,3,1,2]))
         
     def __getitem__(self, index):
         patch_index = index

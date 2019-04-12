@@ -10,17 +10,17 @@ class multi_conv(nn.Module):
             nn.Conv2d(in_ch, out_ch,k,stride=s,padding=p,dilation=d),
             nn.ReLU(inplace=True)
         )
+        self.convs_m = nn.ModuleList()
         if convs > 1:
-            self.conv2 = nn.Sequential(
-                nn.Conv2d(out_ch, out_ch,k,stride=s,padding=p,dilation=d),
-                nn.ReLU(inplace=True)
-            )
+            for l in range(convs-1):
+                self.convs_m.append(nn.Conv2d(out_ch, out_ch,k,stride=s,padding=p,dilation=d))
+                self.convs_m.append(nn.ReLU(inplace=True))
 
 
     def forward(self, x):
         x = self.conv1(x)
-        for i in range(self.convs -1):
-            x = self.conv2(x)
+        for l in self.convs_m:
+            x = l(x)
         return x
 
 
