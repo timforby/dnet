@@ -60,5 +60,6 @@ class scasnet(nn.Module):
         rc_6 = self.rc3(rc_5, self.d.mc3_l_r)
 
         ft = self.fine_tune(rc_6)
-        ft = self.fine_tune(ft)
-        return nn.functional.interpolate(ft, size=(400,400))
+        ft = self.fine_tune_end(ft)
+        ft = nn.functional.interpolate(ft, size=(400,400))
+        return ft
