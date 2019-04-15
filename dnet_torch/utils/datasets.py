@@ -17,14 +17,26 @@ class ListDataset(Dataset):
         for list_path in list_paths:
             with open(list_path, 'r') as file:
                 self.img_files.append([l.split(',') for l in file.readlines()])
-        for l in self.img_files[1:]:
-            assert len(self.img_files[0])==len(l), \
-                "Number of imagery images does not match number of other images"
+        self.verify_images()
         self.patch_shape = (patch_size, patch_size)
         self.data_length = -1
         self.image_index = -1
         self.current_patches = []
         self.patch_lengths = [self.get_num_patch(int(x),int(y)) for _,x,y,_ in self.img_files[0]]
+
+
+    def verify_images(self):
+        for l in self.img_files[1:]:
+            if len(self.img_files[0])!=len(l):
+                raise ValueError("Number of images in"+l[0]+"does not match first list path")
+            for i, (p,x,y,_) in enumerate(l):
+                b_p,b_x,b_y,_ = self.img_files[0][i]
+                if b_x != x or b_y != y:
+                    raise ValueError(
+                        "Image at "+p+" with shape "+str((b_x,b_y))\
+                        +"\ndoes not match image at "+b_p+" with shape "+str((x,y))
+                        )
+
 
     def get_num_patch(self,x,y):
         return 4*x*y//(self.patch_shape[0]*self.patch_shape[1])
@@ -45,12 +57,6 @@ class ListDataset(Dataset):
             imgs.append(img)
             imgs_path.append(img_path)
 
-        for i,l in enumerate(imgs[1:]):
-            assert imgs[0].shape==l.shape, \
-                "Imagery shape with "+str(imgs.shape) \
-                +" does not match other image with "+str(l.shape) \
-                +"\nPaths are "+imgs_path[0][self.image_index % self.data_length] +"\nand"\
-                +imgs_path[i][self.image_index % self.data_length]
 
         self.current_patches = []
         seed = np.random.randint(1e4)

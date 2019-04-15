@@ -1,6 +1,7 @@
 import os
 import argparse
 import cv2
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset_name", "-n", type=str, help="name of dataset")
@@ -18,8 +19,8 @@ for (dir_path, dir_names, file_names) in os.walk(opt.image_folder_path):
 
 os.makedirs("data/"+opt.dataset_name, exist_ok=True)
 f = open("data/"+opt.dataset_name+"/"+opt.dataset_type+".txt", "w")
-for fn in file_names:
-    if '.png' in fn or '.jpg' in fn:
+for fn in tqdm(file_names):
+    if '.png' in fn or '.jpg' in fn.lower():
         path = '/'.join([opt.image_folder_path,fn])
         if opt.add_dimensions:
             img = cv2.imread(path)
