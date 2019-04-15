@@ -20,7 +20,7 @@ for (dir_path, dir_names, file_names) in os.walk(opt.image_folder_path):
 os.makedirs("data/"+opt.dataset_name, exist_ok=True)
 f = open("data/"+opt.dataset_name+"/"+opt.dataset_type+".txt", "w")
 for fn in tqdm(file_names):
-    if '.png' in fn or '.jpg' in fn.lower():
+    if '.png' in fn.lower() or '.jpg' in fn.lower() or '.tif' in fn.lower():
         path = '/'.join([opt.image_folder_path,fn])
         if opt.add_dimensions:
             img = cv2.imread(path)

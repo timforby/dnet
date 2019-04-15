@@ -12,12 +12,13 @@ from skimage.transform import resize
 import sys
 
 class ListDataset(Dataset):
-    def __init__(self, list_paths, patch_size=400):
+    def __init__(self, list_paths, factor_patches=1, patch_size=400):
         self.img_files = []
         for list_path in list_paths:
             with open(list_path, 'r') as file:
                 self.img_files.append([l.split(',') for l in file.readlines()])
         self.verify_images()
+        self.factor_patches = factor_patches
         self.patch_shape = (patch_size, patch_size)
         self.data_length = -1
         self.image_index = -1
@@ -39,7 +40,7 @@ class ListDataset(Dataset):
 
 
     def get_num_patch(self,x,y):
-        return 4*x*y//(self.patch_shape[0]*self.patch_shape[1])
+        return self.factor_patches*x*y//(self.patch_shape[0]*self.patch_shape[1])
 
     def load_images(self):
         #---------

@@ -4,19 +4,22 @@ import torch.optim as optim
 import torchvision.utils as vutils
 from utils.datasets import *
 import os
-    
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  
+
+gt_is_bw = True
 img_size = 400
-batch_size = 12
+batch_size = 4
+num_classes = 6#8
 lr = 1e-3
 total_epochs = 100
-train_paths = ["data/vaihingen/train.txt", "data/vaihingen/target.txt"]
+train_paths = ["data/test/train.txt", "data/test/gt.txt"]
 checkpoint_dir = "checkpoints"
 output_dir = "outputs"
 os.makedirs(checkpoint_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
 print("Net setup")
-net = scasnet(3,8)
+net = scasnet(3,num_classes)
 
 net_opt = torch.optim.Adam([
     {'params' : net.down},
@@ -37,7 +40,10 @@ dataloader = torch.utils.data.DataLoader(
 for epoch in range(total_epochs):
     for batch_i, (path, image_idx, image_total, data) in enumerate(dataloader):
         imagery, ground_truth = data
-        gt_binary = ground_truth[:,0,:,:]*1+ground_truth[:,1,:,:]*2+ground_truth[:,2,:,:]*4
+        if not gt_is_bw:
+            gt_binary = ground_truth[:,0,:,:]*1+ground_truth[:,1,:,:]*2+ground_truth[:,2,:,:]*4
+        else:
+            gt_binary = ground_truth[:,0,:,:].squeeze()*(num_classes-1)
         net.zero_grad()
         output = net(imagery.cuda())
         loss = net_cri(output, gt_binary.long().cuda())
@@ -63,5 +69,9 @@ for epoch in range(total_epochs):
         vutils.save_image(imagery,'%s/%03d_epoch_%s.png' % (output_dir, epoch, "imagery"),normalize=True)
         vutils.save_image(ground_truth,'%s/%03d_epoch_%s.png' % (output_dir, epoch, "ground_truth"),normalize=False)
         segment = torch.argmax(output, dim=1).unsqueeze(1)
-        segment = torch.cat([segment%2,(segment//2)%2,(segment//4)%2],dim=1)
-        vutils.save_image(segment,'%s/%03d_epoch_%s.png' % (output_dir, epoch, "prediction"),normalize=False)
+        if not gt_is_bw:
+            segment = torch.cat([segment%2,(segment//2)%2,(segment//4)%2],dim=1)
+            vutils.save_image(segment,'%s/%03d_epoch_%s.png' % (output_dir, epoch, "prediction"),normalize=False)
+        else:
+            segment = segment.float() / (num_classes-1)
+            vutils.save_image(segment,'%s/%03d_epoch_%s.png' % (output_dir, epoch, "prediction"),normalize=True,range=(0,1))
