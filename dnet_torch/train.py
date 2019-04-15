@@ -12,14 +12,14 @@ batch_size = 4
 num_classes = 6#8
 lr = 1e-3
 total_epochs = 100
-train_paths = ["data/test/train.txt", "data/test/gt.txt"]
+train_paths = ["data/vaihingen/train.txt", "data/vaihingen/target.txt"]
 checkpoint_dir = "checkpoints"
 output_dir = "outputs"
 os.makedirs(checkpoint_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
 print("Net setup")
-net = scasnet(3,num_classes)
+net = scasnet(3,8)
 
 net_opt = torch.optim.Adam([
     {'params' : net.down},
