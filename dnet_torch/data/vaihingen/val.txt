@@ -1,0 +1,17 @@
+../../vaihingen/rgb_ng/0000.png,2767,2428,3
+../../vaihingen/rgb_ng/0001.png,2557,1887,3
+../../vaihingen/rgb_ng/0002.png,2557,1887,3
+../../vaihingen/rgb_ng/0003.png,2557,1887,3
+../../vaihingen/rgb_ng/0004.png,2557,1887,3
+../../vaihingen/rgb_ng/0005.png,2575,1922,3
+../../vaihingen/rgb_ng/0006.png,2565,1919,3
+../../vaihingen/rgb_ng/0007.png,2565,1919,3
+../../vaihingen/rgb_ng/0008.png,2315,1866,3
+../../vaihingen/rgb_ng/0009.png,2546,1903,3
+../../vaihingen/rgb_ng/0010.png,2546,1903,3
+../../vaihingen/rgb_ng/0011.png,3313,1917,3
+../../vaihingen/rgb_ng/0012.png,2563,1917,3
+../../vaihingen/rgb_ng/0013.png,2555,1980,3
+../../vaihingen/rgb_ng/0014.png,2555,1581,3
+../../vaihingen/rgb_ng/0015.png,1884,2805,3
+../../vaihingen/rgb_ng/0016.png,2550,3816,3

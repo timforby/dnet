@@ -3,8 +3,8 @@ import torch
 import torch.optim as optim
 import torchvision.utils as vutils
 from utils.datasets import *
-import os
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  
+#import os
+#os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  
 
 gt_is_bw = True
 img_size = 400
@@ -19,16 +19,17 @@ os.makedirs(checkpoint_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
 print("Net setup")
-net = scasnet(3,8)
+net = scasnet(3,num_classes)
 
-net_opt = torch.optim.Adam([
-    {'params' : net.down},
-    {'params' : net.cntx},
-    {'params' : net.resc},
-    {'params' : net.fine, 'lr':lr*20},
-    ], lr=lr)
-
-#net_opt = torch.optim.Adam(net.parameters())
+"""
+    net_opt = torch.optim.Adam([
+        {'params' : net.down},
+        {'params' : net.cntx},
+        {'params' : net.resc},
+        {'params' : net.fine, 'lr':lr*20},
+        ], lr=lr)
+"""
+net_opt = torch.optim.Adam(net.parameters())
 net_cri = torch.nn.CrossEntropyLoss()
 net.cuda()
 
