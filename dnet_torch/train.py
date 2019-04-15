@@ -6,10 +6,10 @@ from utils.datasets import *
 #import os
 #os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  
 
-gt_is_bw = True
+gt_is_bw = False
 img_size = 400
 batch_size = 4
-num_classes = 6#8
+num_classes = 8#8
 lr = 1e-3
 total_epochs = 100
 train_paths = ["data/vaihingen/train.txt", "data/vaihingen/target.txt"]
