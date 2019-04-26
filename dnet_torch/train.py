@@ -6,7 +6,7 @@ from utils.datasets import *
 #import os
 #os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  
 
-gt_is_bw = False
+gt_is_bw = True
 img_size = 400
 batch_size = 4
 num_classes = 8#8
@@ -44,7 +44,7 @@ for epoch in range(total_epochs):
         if not gt_is_bw:
             gt_binary = ground_truth[:,0,:,:]*1+ground_truth[:,1,:,:]*2+ground_truth[:,2,:,:]*4
         else:
-            gt_binary = ground_truth[:,0,:,:].squeeze()*(num_classes-1)
+            gt_binary = torch.round(ground_truth[:,0,:,:]*255)#(num_classes-1)
         net.zero_grad()
         output = net(imagery.cuda())
         loss = net_cri(output, gt_binary.long().cuda())

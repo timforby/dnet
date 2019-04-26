@@ -73,9 +73,9 @@ class ListDataset(Dataset):
         
     def __getitem__(self, index):
         if self.PATCHES:
-            patch_index = index
+            patch_index = index%self.__len__()
             tmp_img_idx = 0
-            while patch_index%self.__len__() >= self.patch_lengths[tmp_img_idx]:
+            while patch_index >= self.patch_lengths[tmp_img_idx]:
                 patch_index -=self.patch_lengths[tmp_img_idx]
                 tmp_img_idx = (tmp_img_idx+1)%len(self.img_files[0])
             if tmp_img_idx != self.image_index:
