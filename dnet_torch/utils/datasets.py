@@ -11,18 +11,20 @@ from skimage.transform import resize
 
 import sys
 
+
 class ListDataset(Dataset):
-    def __init__(self, list_paths, factor_patches=1, patch_size=400):
+    def __init__(self, list_paths, patches=True, factor_patches=1, patch_size=400):
         self.img_files = []
         for list_path in list_paths:
             with open(list_path, 'r') as file:
                 self.img_files.append([l.split(',') for l in file.readlines()])
         self.verify_images()
+        self.PATCHES = patches
         self.factor_patches = factor_patches
         self.patch_shape = (patch_size, patch_size)
         self.data_length = -1
         self.image_index = -1
-        self.current_patches = []
+        self.current_data = []
         self.patch_lengths = [self.get_num_patch(int(x),int(y)) for _,x,y,_ in self.img_files[0]]
 
 
@@ -58,31 +60,44 @@ class ListDataset(Dataset):
             imgs.append(img)
             imgs_path.append(img_path)
 
-
-        self.current_patches = []
-        seed = np.random.randint(1e4)
-        for img in imgs:
-            mp = self.patch_lengths[self.image_index]
-            self.current_patches.append(patchify(img,self.patch_shape,max_patches=mp,random_state=seed).transpose([0,3,1,2]))
+        if self.PATCHES:
+            self.current_data = []
+            seed = np.random.randint(1e4)
+            for img in imgs:
+                mp = self.patch_lengths[self.image_index]
+                self.current_data.append(patchify(img,self.patch_shape,max_patches=mp,random_state=seed).transpose([0,3,1,2]))
+        else:#JUST IMAGE ITERATION
+            self.current_data = []
+            for img in imgs:
+                self.current_data.append(img.transpose([2,0,1]))
         
     def __getitem__(self, index):
-        patch_index = index
-        tmp_img_idx = 0
-        while patch_index%self.__len__() >= self.patch_lengths[tmp_img_idx]:
-            patch_index -=self.patch_lengths[tmp_img_idx]
-            tmp_img_idx = (tmp_img_idx+1)%len(self.img_files[0])
-        if tmp_img_idx != self.image_index:
-            self.image_index = tmp_img_idx
-            self.load_images()
-        patch = [torch.from_numpy(patches[patch_index]).float() for patches in self.current_patches]
+        if self.PATCHES:
+            patch_index = index
+            tmp_img_idx = 0
+            while patch_index%self.__len__() >= self.patch_lengths[tmp_img_idx]:
+                patch_index -=self.patch_lengths[tmp_img_idx]
+                tmp_img_idx = (tmp_img_idx+1)%len(self.img_files[0])
+            if tmp_img_idx != self.image_index:
+                self.image_index = tmp_img_idx
+                self.load_images()
+            data = [torch.from_numpy(patches[patch_index]).float() for patches in self.current_data]
+
+        else:#JUST IMAGE ITERATION
+            tmp_img_idx = index%self.__len__()
+            if tmp_img_idx != self.image_index:
+                self.image_index = tmp_img_idx
+                self.load_images()
+            data = [torch.from_numpy(data) for data in self.current_data]
+
         return self.img_files[0][self.image_index], \
             self.image_index, \
             len(self.img_files[0]), \
-            patch
+            data
            
 
     def __len__(self):
         if self.data_length == -1:
-            self.data_length = sum(self.patch_lengths)
+            self.data_length = sum(self.patch_lengths) if self.PATCHES else len(self.img_files[0])
 
         return self.data_length
