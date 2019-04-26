@@ -1,0 +1,1 @@
+../test/gt/classification.tif,2248,2248,3
