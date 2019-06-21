@@ -1,0 +1,1 @@
+../test/tr/imagery.tif,2248,2248,3
