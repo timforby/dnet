@@ -57,6 +57,7 @@ class scasnet(nn.Module):
         rc_1234 = self.rc3(rc_234, c1_l)
 
         rc_4 = self.rc4(rc_1234, self.d.mc5_l_r)
+        print(rc_4.shape())
         rc_4 = nn.functional.interpolate(rc_4, size=(50,50))
         rc_5 = self.rc5(rc_4, self.d.mc4_l_r)
         rc_5 = nn.functional.interpolate(rc_5, size=(100,100))
